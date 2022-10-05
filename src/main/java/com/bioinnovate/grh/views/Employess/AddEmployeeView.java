@@ -211,10 +211,13 @@ public class AddEmployeeView extends Div {
         position.getStyle().set("width","45%").set("max-height","55px").set("margin","0% 2%").set("display","inline-block");
         department.getStyle().set("width","45%").set("max-height","55px").set("margin","0% 2%").set("display","inline-block")
                 .set("position","relative").set("top","32px");
-        gender.getStyle().set("width","45%").set("margin","0% 2%").set("display","inline-block");
+        gender.getStyle().set("width","45%").set("max-height","55px").set("margin","0% 2%").set("display","inline-block")
+                .set("position","relative").set("top","32px");
         gender.setItems("Female","Male");
-        contractField.getStyle().set("width","45%").set("margin","0% 2%").set("display","inline-block");
-        substitute.getStyle().set("width","45%").set("margin","0% 2%").set("display","inline-block");
+        contractField.getStyle().set("width","45%").set("max-height","55px").set("margin","0% 2%").set("display","inline-block")
+                .set("position","relative").set("top","32px");
+        substitute.getStyle().set("width","45%").set("max-height","55px").set("margin","0% 2%").set("display","inline-block")
+                .set("position","relative").set("top","32px");
 //        Style buttons
         save.addThemeVariants(ButtonVariant.LUMO_SUCCESS);
         save.getStyle().set("margin-left","10%").set("float","left");
