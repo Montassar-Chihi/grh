@@ -56,7 +56,7 @@ public class RequestDayOffManagementView extends Div {
 
     public RequestDayOffManagementView(@Autowired EmployeeService employeeService, @Autowired RequestDayOffService requestDayOffService,
                                        @Autowired DepartmentService departmentService, @Autowired DelaysService delaysService,
-                                       @Autowired AbsenceService absenceService){
+                                       @Autowired AbsenceService absenceService, @Autowired DaysOffService daysOffService){
         VaadinSession session = VaadinSession.getCurrent();
         employee = employeeService.findEmployeeByEmail(session.getAttribute("username").toString());
 
@@ -115,7 +115,8 @@ public class RequestDayOffManagementView extends Div {
         container2.add(requestDayOffGrid);
 
         calendar.addTimeslotsSelectedListener(event -> {
-            container2.remove(requestDayOffGrid);
+            container2.removeAll();
+            container2.add(title);
             List<RequestDayOff> dataGrid = requestDayOffService.findRequestDayOffByDepartmentIdAndDateBegin(employee.getDepartment().getId(),Date.valueOf(event.getStart().toLocalDate()));
             requestDayOffGrid.setDataProvider(new ListDataProvider<>(dataGrid));
             container2.add(requestDayOffGrid);
@@ -133,7 +134,8 @@ public class RequestDayOffManagementView extends Div {
         }
         requestDayOffGrid.asSingleSelect().addValueChangeListener(event -> {
             Div content = new Div();
-            container2.remove(requestDayOffGrid);
+            container2.removeAll();
+            container2.add(title);
             if (event.getValue() != null) {
                 Optional<RequestDayOff> requestDayOffFromBackend = requestDayOffService.get(event.getValue().getId());
                 // when a row is selected but the data is no longer available, refresh grid
@@ -191,9 +193,12 @@ public class RequestDayOffManagementView extends Div {
                     employee.setInDaysOff(true);
                     employee.setDaysOffLeft(employee.getDaysOffLeft()-requestDayOff.getDuration());
                     daysOff.setEmployee(employee);
+                    daysOffService.update(daysOff);
+                    employeeService.update(employee);
                 }
                 requestDayOffService.update(requestDayOff);
-                container2.remove(content);
+                container2.removeAll();
+                container2.add(title);
                 requestDayOffGrid.getDataProvider().refreshAll();
                 container2.add(requestDayOffGrid);
                 UI.getCurrent().getPage().reload();
@@ -206,7 +211,8 @@ public class RequestDayOffManagementView extends Div {
             deny.addClickListener(event1 -> {
                 requestDayOff.setStatus("Refusée");
                 requestDayOffService.update(requestDayOff);
-                container2.remove(content);
+                container2.removeAll();
+                container2.add(title);
                 requestDayOffGrid.getDataProvider().refreshAll();
                 container2.add(requestDayOffGrid);
                 UI.getCurrent().getPage().reload();
@@ -216,10 +222,15 @@ public class RequestDayOffManagementView extends Div {
             cancel.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
             cancel.setIcon(new Icon(VaadinIcon.CLOSE));
             cancel.addClickListener(event1 -> {
-                container2.remove(content);
+                container2.removeAll();
+                container2.add(title);
                 requestDayOffGrid.getDataProvider().refreshAll();
                 container2.add(requestDayOffGrid);
             });
+            if (requestDayOff.getDateBegin().toLocalDate().compareTo(LocalDate.now()) < 0 ){
+                accept.setEnabled(false);
+                deny.setEnabled(false);
+            }
 
             HorizontalLayout buttonLayout = new HorizontalLayout(accept,cancel,deny);
 
