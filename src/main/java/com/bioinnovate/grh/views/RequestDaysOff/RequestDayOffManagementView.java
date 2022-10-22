@@ -274,7 +274,6 @@ public class RequestDayOffManagementView extends Div {
         content.setVisible(false);
         requestDayOffGrid.setVisible(true);
         requestDayOffGrid.getDataProvider().refreshAll();
-        System.out.println("step 3 : select cancel : " + content.isVisible());
     }
 
     private void configureZoneRouge(DepartmentService departmentService){
@@ -286,6 +285,8 @@ public class RequestDayOffManagementView extends Div {
             redZone.setTitle("Zone Rouge ! Pas de congés pendant cette période");
             redZone.setStart(department.getDateRedZone().toLocalDate());
             redZone.setEnd(redZone.getStart().plusDays(department.getDurationRedZone()));
+            redZone.setEditable(false);
+            redZone.setAllDay(true);
             calendar.addEntry(redZone);
         }catch (Exception ignored){}
 //        Add zone rouge picker
