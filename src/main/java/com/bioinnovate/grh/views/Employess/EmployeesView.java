@@ -39,10 +39,9 @@ import java.util.List;
 @Secured({"ADMIN","SUPER USER"})
 public class EmployeesView extends Div {
 
-    private ListBox<Employee> employees = new ListBox<>();
-    private TextField filterText = new TextField();
-    private Employee user;
-    private VaadinSession session = VaadinSession.getCurrent();
+    private final ListBox<Employee> employees = new ListBox<>();
+    private final TextField filterText = new TextField();
+    private final Employee user;
 
 
     public EmployeesView(@Autowired EmployeeService employeeService, @Autowired AbsenceService absenceService,
@@ -50,6 +49,7 @@ public class EmployeesView extends Div {
                          @Autowired OvertimeService overtimeService, @Autowired DepartmentService departmentService,
                          @Autowired RequestDayOffService requestDayOffService,@Autowired UserService userService){
 
+        VaadinSession session = VaadinSession.getCurrent();
         user = employeeService.findEmployeeByEmail(session.getAttribute("username").toString());
 
         VerticalLayout verticalLayout = new VerticalLayout();

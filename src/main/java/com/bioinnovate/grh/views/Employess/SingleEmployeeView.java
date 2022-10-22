@@ -6,6 +6,7 @@ import com.bioinnovate.grh.data.utils.OpenPdf;
 import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.dependency.CssImport;
@@ -133,6 +134,7 @@ public class SingleEmployeeView extends Div {
     private Span substitute;
     private ComboBox<Employee> substituteField;
     private Button openCv;
+    private Checkbox justified;
 
     public SingleEmployeeView(@Autowired Employee employee, @Autowired EmployeeService employeeService, @Autowired AbsenceService absenceService,
                               @Autowired DelaysService delaysService, @Autowired DaysOffService daysOffService,
@@ -163,7 +165,7 @@ public class SingleEmployeeView extends Div {
     private void fillOvertimeDiv(Employee employee, OvertimeService overtimeService){
         overtime = new Div();
         titleContainerOvertime = new Div();
-        titleOvertime = new H3("les heures supplémentaires");
+        titleOvertime = new H3("Heures supplémentaires");
         titleContainerOvertime.add(titleOvertime);
         Button addOvertime = new Button(new Icon(VaadinIcon.PLUS));
         addOvertime.getStyle().set("color","white").set("margin-left","15px");
@@ -224,9 +226,9 @@ public class SingleEmployeeView extends Div {
         });
         titleContainerDaysOff.add(addDaysOff);
         daysOffGrid = new Grid<>(DaysOff.class,false);
-        daysOffGrid.addColumn("dateBegin").setHeader("Date de debut");
+        daysOffGrid.addColumn("dateBegin").setHeader("Date de début");
         daysOffGrid.addColumn("dateEnd").setHeader("Date de fin");
-        daysOffGrid.addColumn("reason");
+        daysOffGrid.addColumn("reason").setHeader("Raison");
         daysOffDataProvider = new ListDataProvider<>(daysOffService.findDaysOffByEmployee(employee.getId()));
         daysOffGrid.setDataProvider(daysOffDataProvider);
         daysOffGrid.asSingleSelect().addValueChangeListener(event -> {
@@ -371,8 +373,9 @@ public class SingleEmployeeView extends Div {
     }
 
     private void styleAbsenceFields(){
-        dateAbsence.getStyle().set("width","100%").set("margin","10px auto");
-        durationAbsence.getStyle().set("width","100%").set("margin","10px auto");
+        dateAbsence.getStyle().set("width","95%").set("margin","10px 2.5%");
+        durationAbsence.getStyle().set("width","95%").set("margin","10px 2.5%");
+        justified.getStyle().set("width","95%").set("margin","10px 2.5%");
         saveAbsence.setIcon(new Icon(VaadinIcon.CHECK));
         saveAbsence.addThemeVariants(ButtonVariant.LUMO_SUCCESS);
         saveAbsence.setWidth("30%");
@@ -388,6 +391,7 @@ public class SingleEmployeeView extends Div {
     private void fillAbsenceFields(Absences absence){
         dateAbsence.setValue(absence.getDate().toLocalDate());
         durationAbsence.setValue(absence.getDuration());
+        justified.setValue(absence.getJustified());
     }
 
     private void createEditAbsence(Absences absenceDetails, AbsenceService absenceService){
@@ -398,11 +402,13 @@ public class SingleEmployeeView extends Div {
 
         dateAbsence = new DatePicker("Date");
         durationAbsence = new IntegerField("Durée");
+        justified = new Checkbox("Justifiée");
         saveAbsence = new Button("Sauvgarder");
         cancelAbsence = new Button("Annuler");
         deleteAbsence = new Button("Supprimer");
         if (absenceDetails .getId() != null){
             absenceButtonLayout = new HorizontalLayout(saveAbsence, cancelAbsence, deleteAbsence);
+            fillAbsenceFields(absenceDetails);
         }else {
             absenceButtonLayout = new HorizontalLayout(saveAbsence, cancelAbsence);
             saveAbsence.setWidthFull();
@@ -410,11 +416,7 @@ public class SingleEmployeeView extends Div {
         }
         absenceButtonLayout.setId("buttons-layout");
 
-        if (absenceDetails.getId() != null){
-            fillAbsenceFields(absenceDetails);
-        }
-
-        absences.add(titleContainerAbsences,dateAbsence,durationAbsence,absenceButtonLayout);
+        absences.add(titleContainerAbsences,dateAbsence,durationAbsence,justified,absenceButtonLayout);
         horizontalLayoutForDelaysAndAbsences.add(totalContainerAbsences,totalContainerDelays);
 
 //        Style the fields
@@ -426,7 +428,7 @@ public class SingleEmployeeView extends Div {
             saveAbsence(absenceDetails,absenceService);
 //            remove fields from main div to replace it with the grid
             horizontalLayoutForDelaysAndAbsences.remove(totalContainerAbsences,totalContainerDelays);
-            absences.remove(titleContainerAbsences,dateAbsence,durationAbsence,absenceButtonLayout);
+            absences.remove(titleContainerAbsences,dateAbsence,durationAbsence,justified,absenceButtonLayout);
 //            Fill the days off grid
             fillAbsencesDiv(theEmployee,absenceService);
 //            Add the layouts again after updating
@@ -438,7 +440,7 @@ public class SingleEmployeeView extends Div {
             absenceService.deleteAbsence(absenceDetails.getId());
 //            remove fields from main div to replace it with the grid
             horizontalLayoutForDelaysAndAbsences.remove(totalContainerAbsences,totalContainerDelays);
-            absences.remove(titleContainerAbsences,dateAbsence,durationAbsence,absenceButtonLayout);
+            absences.remove(titleContainerAbsences,dateAbsence,durationAbsence,justified,absenceButtonLayout);
 //            Fill the days off grid
             fillAbsencesDiv(theEmployee,absenceService);
 //            Add the layouts again after updating
@@ -448,7 +450,7 @@ public class SingleEmployeeView extends Div {
         cancelAbsence.addClickListener(event -> {
 //            remove fields from main div to replace it with the spans
             horizontalLayoutForDelaysAndAbsences.remove(totalContainerAbsences,totalContainerDelays);
-            absences.remove(titleContainerAbsences,dateAbsence,durationAbsence,absenceButtonLayout);
+            absences.remove(titleContainerAbsences,dateAbsence,durationAbsence,justified,absenceButtonLayout);
 //            Fill the days off grid
             fillAbsencesDiv(theEmployee,absenceService);
 //            Add the layouts again after updating
@@ -459,15 +461,16 @@ public class SingleEmployeeView extends Div {
     private void saveAbsence(Absences absenceDetails, AbsenceService absenceService) {
         absenceDetails.setDate(Date.valueOf(dateAbsence.getValue()));
         absenceDetails.setDuration(durationAbsence.getValue());
+        absenceDetails.setJustified(justified.getValue());
         absenceDetails.setEmployee(theEmployee);
         absenceService.update(absenceDetails);
     }
 
     private void styleDelaysFields(){
-        dateDelays.getStyle().set("width","100%").set("margin","10px auto");
-        durationDelaysMin.getStyle().set("width","30%").set("margin","10px 3px");
-        durationDelaysHours.getStyle().set("width","30%").set("margin","10px 3px");
-        durationDelaysSec.getStyle().set("width","30%").set("margin","10px 3px");
+        dateDelays.getStyle().set("width","95%").set("margin","10px 2.5%");
+        durationDelaysMin.getStyle().set("width","30%").set("margin","10px 0.8%");
+        durationDelaysHours.getStyle().set("width","30%").set("margin","10px 0.8% 10px 3.2%");
+        durationDelaysSec.getStyle().set("width","30%").set("margin","10px 0.8%").set("margin-right","3.2%");
         saveDelays.setIcon(new Icon(VaadinIcon.CHECK));
         saveDelays.addThemeVariants(ButtonVariant.LUMO_SUCCESS);
         saveDelays.setWidth("30%");
@@ -526,7 +529,7 @@ public class SingleEmployeeView extends Div {
         if (delaysDetails.getId() != null){
             fillDelaysFields(delaysDetails);
         }
-        
+
         delays.add(titleContainerDelays,dateDelays,durationDelaysHours,durationDelaysMin,durationDelaysSec,delaysButtonLayout);
         horizontalLayoutForDelaysAndAbsences.add(totalContainerAbsences,totalContainerDelays);
 
@@ -537,7 +540,11 @@ public class SingleEmployeeView extends Div {
         saveDelays.addClickListener(event -> {
 //            Save the update
             saveDelays(delaysDetails,delaysService);
-            totalSeconds = delaysService.findTotalDelaysByEmployeeId(theEmployee.getId());
+            try {
+                totalSeconds = delaysService.findTotalDelaysByEmployeeId(theEmployee.getId());
+            }catch (Exception e){
+                totalSeconds = 0;
+            }
             totalDelays.setValue((totalSeconds/60)/60+"h : "+(totalSeconds/60)%60+"min : "+totalSeconds%60+"sec");
 //            remove fields from main div to replace it with the grid
             horizontalLayoutForDelaysAndAbsences.remove(totalContainerAbsences,totalContainerDelays);
@@ -551,7 +558,11 @@ public class SingleEmployeeView extends Div {
         deleteDelays.addClickListener(event -> {
 //            Save the update
             delaysService.deleteDelays(delaysDetails.getId());
-            totalSeconds = delaysService.findTotalDelaysByEmployeeId(theEmployee.getId());
+            try {
+                totalSeconds = delaysService.findTotalDelaysByEmployeeId(theEmployee.getId());
+            }catch (Exception e){
+                totalSeconds = 0;
+            }
             totalDelays.setValue((totalSeconds/60)/60+"h : "+(totalSeconds/60)%60+"min : "+totalSeconds%60+"sec");
 //            remove fields from main div to replace it with the grid
             horizontalLayoutForDelaysAndAbsences.remove(totalContainerAbsences,totalContainerDelays);
@@ -581,10 +592,10 @@ public class SingleEmployeeView extends Div {
     }
 
     private void styleOvertimeFields(){
-        dateOvertime.getStyle().set("width","100%").set("margin","10px auto");
-        durationOvertimeMin.getStyle().set("width","30%").set("margin","10px 3px");
-        durationOvertimeHours.getStyle().set("width","30%").set("margin","10px 3px");
-        durationOvertimeSec.getStyle().set("width","30%").set("margin","10px 3px");
+        dateOvertime.getStyle().set("width","95%").set("margin","10px 2.5%");
+        durationOvertimeMin.getStyle().set("width","30%").set("margin","10px 0.8%");
+        durationOvertimeHours.getStyle().set("width","30%").set("margin","10px 0.8% 10px 3.2%");
+        durationOvertimeSec.getStyle().set("width","30%").set("margin","10px 0.8%").set("margin-right","3.2%");
         saveOvertime.setIcon(new Icon(VaadinIcon.CHECK));
         saveOvertime.addThemeVariants(ButtonVariant.LUMO_SUCCESS);
         saveOvertime.setWidth("30%");
@@ -633,16 +644,13 @@ public class SingleEmployeeView extends Div {
         deleteOvertime = new Button("Supprimer");
         if (overtimeDetails .getId() != null){
             overtimeButtonLayout = new HorizontalLayout(saveOvertime, cancelOvertime, deleteOvertime);
+            fillOvertimeFields(overtimeDetails);
         }else {
             overtimeButtonLayout = new HorizontalLayout(saveOvertime, cancelOvertime);
             cancelOvertime.setWidthFull();
             saveOvertime.setWidthFull();
         }
         overtimeButtonLayout.setId("buttons-layout");
-
-        if (overtimeDetails .getId() != null){
-            fillOvertimeFields(overtimeDetails);
-        }
 
         overtime.add(titleContainerOvertime,dateOvertime,durationOvertimeHours,durationOvertimeMin,durationOvertimeSec,overtimeButtonLayout);
         horizontalLayoutForDaysOffAndOvertime.add(totalContainerDaysOff,totalContainerOvertime);
@@ -654,7 +662,11 @@ public class SingleEmployeeView extends Div {
         saveOvertime.addClickListener(event -> {
 //            Save the update
             saveOvertime(overtimeDetails,overtimeService);
-            totalSecondsOvertime = overtimeService.findTotalOvertimeByEmployee(theEmployee.getId());
+            try {
+                totalSecondsOvertime = overtimeService.findTotalOvertimeByEmployee(theEmployee.getId());
+            }catch (Exception e){
+                totalSecondsOvertime = 0;
+            }
             total.setValue((totalSecondsOvertime/60)/60+"h : "+(totalSecondsOvertime/60)%60+"min : "+totalSecondsOvertime%60+"sec");
 //            remove fields from main div to replace it with the grid
             horizontalLayoutForDaysOffAndOvertime.remove(totalContainerDaysOff,totalContainerOvertime);
@@ -668,7 +680,11 @@ public class SingleEmployeeView extends Div {
         deleteOvertime.addClickListener(event -> {
 //            Save the update
             overtimeService.deleteOvertime(overtimeDetails.getId());
-            totalSecondsOvertime = overtimeService.findTotalOvertimeByEmployee(theEmployee.getId());
+            try {
+                totalSecondsOvertime = overtimeService.findTotalOvertimeByEmployee(theEmployee.getId());
+            }catch (Exception e){
+                totalSecondsOvertime = 0;
+            }
             total.setValue((totalSecondsOvertime/60)/60+"h : "+(totalSecondsOvertime/60)%60+"min : "+totalSecondsOvertime%60+"sec");
 //          remove fields from main div to replace it with the grid
             horizontalLayoutForDaysOffAndOvertime.remove(totalContainerDaysOff,totalContainerOvertime);
@@ -698,9 +714,9 @@ public class SingleEmployeeView extends Div {
     }
 
     private void styleDaysOffFields(){
-        beginAt.getStyle().set("width","100%").set("margin","10px auto");
-        endAt.getStyle().set("width","100%").set("margin","10px auto");
-        reason.getStyle().set("width","100%").set("margin","10px auto");
+        beginAt.getStyle().set("width","95%").set("margin","10px 2.5%");
+        endAt.getStyle().set("width","95%").set("margin","10px 2.5%");
+        reason.getStyle().set("width","95%").set("margin","10px 2.5%");
         saveDaysOff.setIcon(new Icon(VaadinIcon.CHECK));
         saveDaysOff.addThemeVariants(ButtonVariant.LUMO_SUCCESS);
         saveDaysOff.setWidth("30%");
@@ -725,7 +741,7 @@ public class SingleEmployeeView extends Div {
         horizontalLayoutForDaysOffAndOvertime.remove(totalContainerDaysOff,totalContainerOvertime);
         daysOff.remove(titleContainerDaysOff,daysOffGrid);
 
-        beginAt = new DatePicker("Date de debut");
+        beginAt = new DatePicker("Date de début");
         endAt = new DatePicker("Date de fin");
         reason = new TextArea("Raison");
         saveDaysOff = new Button("Sauvgarder");
@@ -838,7 +854,7 @@ public class SingleEmployeeView extends Div {
 //        Add the components to their respective layouts
         titleContainerPersonalInfo.add(titlePersonalInfo);
         personalInformation.add(titleContainerPersonalInfo, pictureMemoryUpload, firstNameField, lastNameField, codeCnssField, cinField,
-                phoneField, emailField, salaryField, positionField, departmentField, substituteField,contractField,personalInformationButtonLayout);
+                phoneField, emailField, salaryField, positionField, substituteField,personalInformationButtonLayout);
         add(picture,fullName,personalInformation,horizontalLayoutForDelaysAndAbsences,horizontalLayoutForDaysOffAndOvertime,endStylingDiv);
         //        Style the fields
         styleFields();
@@ -850,7 +866,7 @@ public class SingleEmployeeView extends Div {
 //            remove fields from main div to replace it with the spans
             remove(picture,fullName,personalInformation,horizontalLayoutForDelaysAndAbsences,horizontalLayoutForDaysOffAndOvertime,endStylingDiv);
             personalInformation.remove(titleContainerPersonalInfo, pictureMemoryUpload, firstNameField, lastNameField, codeCnssField, cinField,
-                    phoneField, emailField, salaryField, positionField, departmentField, substituteField,contractField,personalInformationButtonLayout);
+                    phoneField, emailField, salaryField, positionField, substituteField,personalInformationButtonLayout);
 //            Fill the personal info spans
             fillPersonalInformationSpans(employee,employeeService,departmentService,requestDayOffService);
             add(horizontalLayoutForDelaysAndAbsences,horizontalLayoutForDaysOffAndOvertime,endStylingDiv);
@@ -860,7 +876,7 @@ public class SingleEmployeeView extends Div {
 //            remove fields from main div to replace it with the spans
             remove(picture,fullName,personalInformation,horizontalLayoutForDelaysAndAbsences,horizontalLayoutForDaysOffAndOvertime,endStylingDiv);
             personalInformation.remove(titleContainerPersonalInfo, pictureMemoryUpload, firstNameField, lastNameField, codeCnssField, cinField,
-                    phoneField, emailField, salaryField, positionField, departmentField, substituteField,contractField,personalInformationButtonLayout);
+                    phoneField, emailField, salaryField, positionField, substituteField,personalInformationButtonLayout);
 //            Fill the personal info spans
             fillPersonalInformationSpans(employee,employeeService,departmentService,requestDayOffService);
             add(horizontalLayoutForDelaysAndAbsences,horizontalLayoutForDaysOffAndOvertime,endStylingDiv);
@@ -1033,8 +1049,8 @@ public class SingleEmployeeView extends Div {
         salaryField.getStyle().set("width","45%").set("max-height","55px").set("margin","0% 2%").set("display","inline-block");
         positionField.getStyle().set("width","45%").set("max-height","55px").set("margin","0% 2%").set("display","inline-block");
         departmentField.getStyle().set("max-height","55px").set("margin","5% 2%").set("display","inline-block").set("width","45%");
-        substituteField.getStyle().set("max-height","55px").set("margin","5% 2%").set("display","inline-block").set("width","45%");
-        contractField.getStyle().set("max-height","55px").set("margin","5% 2%").set("display","inline-block").set("width","45%").set("position","relative").set("top","-50px");
+        substituteField.getStyle().set("max-height","55px").set("margin","5% 2%").set("display","inline-block").set("width","45%").set("position","relative").set("top","0.3rem");
+        contractField.getStyle().set("max-height","55px").set("margin","5% 2%").set("display","inline-block").set("width","45%");
 
 //        Style buttons
         save.addThemeVariants(ButtonVariant.LUMO_SUCCESS);

@@ -25,6 +25,7 @@ vaadin-item:hover {
 }
 
 #buttons-layout {
+    margin: 1%;
   width: 100%;
   padding: var(--lumo-space-s) var(--lumo-space-s) !important;
 }
@@ -103,6 +104,6 @@ h1 , h3{
     font-family : sans-serif;
 }
 
-#fc-event-time {
-    display : none;
+vaadin-button{
+    cursor: pointer;
 }

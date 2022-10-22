@@ -203,15 +203,33 @@ public class AddEmployeeView extends Div {
         salary.setPrefixComponent(dinarPrefix);
         salary.getStyle().set("width","45%").set("max-height","55px").set("margin","0% 2%").set("display","inline-block");
         position.getStyle().set("width","45%").set("max-height","55px").set("margin","0% 2%").set("display","inline-block");
-        department.getStyle().set("width","45%").set("max-height","55px").set("margin","0% 2%").set("display","inline-block")
-                .set("position","relative").set("top","32px");
-        gender.getStyle().set("width","45%").set("max-height","55px").set("margin","0% 2%").set("display","inline-block")
-                .set("position","relative").set("top","32px");
+        department.getStyle().set("max-height","75px").set(
+                "margin","2% 2%").set(
+                "top","2rem").set(
+                "display","inline-block").set(
+                "width","45%").set(
+                "position","relative").set(
+                "height","100%");
+        substitute.getStyle().set("max-height","75px").set(
+                "margin","2% 2%").set(
+                "top","2rem").set(
+                "display","inline-block").set(
+                "width","45%").set(
+                "position","relative").set(
+                "height","100%");
+        gender.getStyle().set("max-height","75px").set(
+                "margin","2% 2%").set(
+                "display","inline-block").set(
+                "width","45%").set(
+                "position","relative").set(
+                "height","100%");
         gender.setItems("Female","Male");
-        contractField.getStyle().set("width","45%").set("max-height","55px").set("margin","0% 2%").set("display","inline-block")
-                .set("position","relative").set("top","32px");
-        substitute.getStyle().set("width","45%").set("max-height","55px").set("margin","0% 2%").set("display","inline-block")
-                .set("position","relative").set("top","32px");
+        contractField.getStyle().set("max-height","75px").set(
+                "margin","2% 2%").set(
+                "display","inline-block").set(
+                "width","45%").set(
+                "position","relative").set(
+                "height","100%");
 //        Style buttons
         save.addThemeVariants(ButtonVariant.LUMO_SUCCESS);
         save.getStyle().set("margin-left","10%").set("float","left");
