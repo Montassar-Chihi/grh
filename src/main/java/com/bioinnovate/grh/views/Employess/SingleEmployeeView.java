@@ -69,7 +69,6 @@ public class SingleEmployeeView extends Div {
     private TextField phoneField;
     private EmailField emailField;
     private TextField salaryField;
-    private IntegerField daysOffLeftField;
     private TextField positionField;
     private ComboBox<Department> departmentField;
     private Button save;
@@ -349,7 +348,7 @@ public class SingleEmployeeView extends Div {
         try {
             substitute.setText("Sub : " + newEmployee.getSubstitute().getName());
         }catch (Exception e){
-            substitute.setText("Sub : Not Set Yet !");
+            substitute.setText("Sub : Pas de Sub encore!");
         }
         double joursRestants = newEmployee.getDaysOffLeft() ;
         for (RequestDayOff r:requestDayOffService.findRequestDayOffByEmployee(newEmployee.getId())){
@@ -818,8 +817,6 @@ public class SingleEmployeeView extends Div {
         dinarPrefix = new Div();
         dinarPrefix.setText("TND");
         salaryField.setPrefixComponent(dinarPrefix);
-        daysOffLeftField = new IntegerField("Congés");
-        daysOffLeftField.setHasControls(true);
         positionField = new TextField("Poste");
         substituteField = new ComboBox<>("Sub");
         substituteField.setItems(employeeService.findSubs(employee.getEmail(),employee.getDepartment()));
@@ -841,7 +838,7 @@ public class SingleEmployeeView extends Div {
 //        Add the components to their respective layouts
         titleContainerPersonalInfo.add(titlePersonalInfo);
         personalInformation.add(titleContainerPersonalInfo, pictureMemoryUpload, firstNameField, lastNameField, codeCnssField, cinField,
-                phoneField, emailField, salaryField, positionField, departmentField, substituteField, daysOffLeftField,contractField,personalInformationButtonLayout);
+                phoneField, emailField, salaryField, positionField, departmentField, substituteField,contractField,personalInformationButtonLayout);
         add(picture,fullName,personalInformation,horizontalLayoutForDelaysAndAbsences,horizontalLayoutForDaysOffAndOvertime,endStylingDiv);
         //        Style the fields
         styleFields();
@@ -853,7 +850,7 @@ public class SingleEmployeeView extends Div {
 //            remove fields from main div to replace it with the spans
             remove(picture,fullName,personalInformation,horizontalLayoutForDelaysAndAbsences,horizontalLayoutForDaysOffAndOvertime,endStylingDiv);
             personalInformation.remove(titleContainerPersonalInfo, pictureMemoryUpload, firstNameField, lastNameField, codeCnssField, cinField,
-                    phoneField, emailField, salaryField, positionField, departmentField, substituteField, daysOffLeftField,contractField,personalInformationButtonLayout);
+                    phoneField, emailField, salaryField, positionField, departmentField, substituteField,contractField,personalInformationButtonLayout);
 //            Fill the personal info spans
             fillPersonalInformationSpans(employee,employeeService,departmentService,requestDayOffService);
             add(horizontalLayoutForDelaysAndAbsences,horizontalLayoutForDaysOffAndOvertime,endStylingDiv);
@@ -863,7 +860,7 @@ public class SingleEmployeeView extends Div {
 //            remove fields from main div to replace it with the spans
             remove(picture,fullName,personalInformation,horizontalLayoutForDelaysAndAbsences,horizontalLayoutForDaysOffAndOvertime,endStylingDiv);
             personalInformation.remove(titleContainerPersonalInfo, pictureMemoryUpload, firstNameField, lastNameField, codeCnssField, cinField,
-                    phoneField, emailField, salaryField, positionField, departmentField, substituteField, daysOffLeftField,contractField,personalInformationButtonLayout);
+                    phoneField, emailField, salaryField, positionField, departmentField, substituteField,contractField,personalInformationButtonLayout);
 //            Fill the personal info spans
             fillPersonalInformationSpans(employee,employeeService,departmentService,requestDayOffService);
             add(horizontalLayoutForDelaysAndAbsences,horizontalLayoutForDaysOffAndOvertime,endStylingDiv);
@@ -880,7 +877,6 @@ public class SingleEmployeeView extends Div {
         employee.setPosition(positionField.getValue());
         employee.setPhone(Integer.parseInt(phoneField.getValue()));
         employee.setDepartment(departmentField.getValue());
-        employee.setDaysOffLeft(daysOffLeftField.getValue());
         employee.setContract(contractField.getValue());
         employee.setSubstitute(substituteField.getValue());
         String fileName = pictureMemoryBuffer.getFileName();
@@ -909,7 +905,6 @@ public class SingleEmployeeView extends Div {
         phoneField.setValue(String.valueOf(employee.getPhone()));
         emailField.setValue(employee.getEmail());
         salaryField.setValue(String.valueOf(employee.getSalary()));
-        daysOffLeftField.setValue((int) employee.getDaysOffLeft()+1);
         positionField.setValue(employee.getPosition());
         departmentField.setValue(employee.getDepartment());
         contractField.setValue(employee.getContract());
@@ -1036,8 +1031,6 @@ public class SingleEmployeeView extends Div {
         dinarPrefix.setText("TND");
         salaryField.setPrefixComponent(dinarPrefix);
         salaryField.getStyle().set("width","45%").set("max-height","55px").set("margin","0% 2%").set("display","inline-block");
-        daysOffLeftField.getStyle().set("width","20%").set("margin","0% 2%").set("display","inline-block").set("position","relative").set("top","-32px");
-        daysOffLeftField.setHasControls(true);
         positionField.getStyle().set("width","45%").set("max-height","55px").set("margin","0% 2%").set("display","inline-block");
         departmentField.getStyle().set("max-height","55px").set("margin","5% 2%").set("display","inline-block").set("width","45%");
         substituteField.getStyle().set("max-height","55px").set("margin","5% 2%").set("display","inline-block").set("width","45%");

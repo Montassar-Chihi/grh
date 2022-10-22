@@ -48,7 +48,6 @@ public class AddEmployeeView extends Div {
     private final EmailField email ;
     private final TextField salary ;
     private final Div dinarPrefix ;
-    private final IntegerField daysOffLeft;
     private final TextField position ;
     private final ComboBox<Department> department ;
     private final ComboBox<String> gender ;
@@ -79,8 +78,6 @@ public class AddEmployeeView extends Div {
         dinarPrefix = new Div();
         dinarPrefix.setText("TND");
         salary.setPrefixComponent(dinarPrefix);
-        daysOffLeft = new IntegerField("Congés");
-        daysOffLeft.setHasControls(true);
         position = new TextField("Poste");
         department = new ComboBox<>("Départment");
         department.setItems(departmentService.findAll());
@@ -125,7 +122,6 @@ public class AddEmployeeView extends Div {
         phone.setValue("");
         email.setValue("");
         salary.setValue("");
-        daysOffLeft.setValue(0);
         position.setValue("");
         department.setValue(null);
         gender.setValue("");
@@ -145,7 +141,6 @@ public class AddEmployeeView extends Div {
         employee.setPosition(position.getValue());
         employee.setPhone(Integer.parseInt(phone.getValue()));
         employee.setDepartment(department.getValue());
-        employee.setDaysOffLeft(daysOffLeft.getValue());
         employee.setGender(gender.getValue().equals("female"));
         employee.setActive(true);
         employee.setInDaysOff(false);
@@ -176,6 +171,7 @@ public class AddEmployeeView extends Div {
     private void stylePage() {
         // Style box
         personalInformation.setWidth("80%");
+        personalInformation.setMinHeight("42rem");
         personalInformation.getStyle().set("box-shadow"," inset 4px 4px 15px 0px #6c6868, 5px 5px 15px 5px rgb(0 0 0 / 0%)").set("margin","100px auto").set("margin-bottom","10px").set("border","1px solid black").set("padding","10px").set("border-radius","20px");
         titleContainerPersonalInfo.getStyle().set("border","1px solid").set(
                 "background","var(--theme-color)").set(
@@ -206,8 +202,6 @@ public class AddEmployeeView extends Div {
         dinarPrefix.setText("TND");
         salary.setPrefixComponent(dinarPrefix);
         salary.getStyle().set("width","45%").set("max-height","55px").set("margin","0% 2%").set("display","inline-block");
-        daysOffLeft.getStyle().set("width","20%").set("margin","0% 2%").set("display","inline-block");
-        daysOffLeft.setHasControls(true);
         position.getStyle().set("width","45%").set("max-height","55px").set("margin","0% 2%").set("display","inline-block");
         department.getStyle().set("width","45%").set("max-height","55px").set("margin","0% 2%").set("display","inline-block")
                 .set("position","relative").set("top","32px");

@@ -148,7 +148,7 @@ public class EmployeeProfileView extends Div {
         total.setReadOnly(true);
         total.setValue((totalSecondsOvertime/60)/60+"h : "+(totalSecondsOvertime/60)%60+"min : "+totalSecondsOvertime%60+"sec");
         total.setWidth("90%");
-total.getStyle().set("margin","0 auto");
+        total.getStyle().set("margin","0 auto");
         VerticalLayout totalContainer = new VerticalLayout(overtime,total);
         totalContainer.setWidth("50%");
         horizontalLayoutForDaysOffAndOvertime.add(totalContainer);
@@ -172,6 +172,9 @@ total.getStyle().set("margin","0 auto");
         requestTimeOff.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         requestTimeOff.setWidth("40%");
         requestTimeOff.getStyle().set("margin","10px auto");
+        if (employee.getEmail().equalsIgnoreCase("nadia@gmail.com")){
+            requestTimeOff.getStyle().set("background","var(--nadia-color)");
+        }
         requestTimeOff.addClickListener(event -> {
             Dialog dialog = new Dialog();
             dialog.setWidth("50%");
@@ -416,51 +419,91 @@ total.getStyle().set("margin","0 auto");
         daysOff.setWidth("90%");
         daysOff.getStyle().set("background","#f1f1f1").set("box-shadow"," inset 4px 4px 15px 0px #6c6868, 5px 5px 15px 5px rgb(0 0 0 / 0%)").set("margin","100px auto").set("border","1px solid black").set("padding","10px").set("border-radius","20px").set("margin-bottom","0");
         titleDaysOff.getStyle().set("color","white").set("margin","auto").set("display","inline-block");
-        titleContainerDaysOff.getStyle().set("border"," 1px solid").set(
-                "background","var(--theme-color)").set(
-                "width"," 80%").set(
-                "height"," fit-content").set(
-                "margin","-50px auto 20px").set(
-                "border-radius"," 30px").set(
-                "text-align"," center").set("padding","20px");
+        if (employee.getEmail().equalsIgnoreCase("nadia@gmail.com")){
+            titleContainerDaysOff.getStyle().set("border"," 1px solid").set(
+                    "background","var(--nadia-color)").set(
+                    "width"," 80%").set(
+                    "height"," fit-content").set(
+                    "margin","-50px auto 20px").set(
+                    "border-radius"," 30px").set(
+                    "text-align"," center").set("padding","20px");
+        }else{
+            titleContainerDaysOff.getStyle().set("border"," 1px solid").set(
+                    "background","var(--theme-color)").set(
+                    "width"," 80%").set(
+                    "height"," fit-content").set(
+                    "margin","-50px auto 20px").set(
+                    "border-radius"," 30px").set(
+                    "text-align"," center").set("padding","20px");
+        }
     }
 
     private void styleAbsences(){
         absences.setWidth("90%");
         absences.getStyle().set("background","#f1f1f1").set("box-shadow"," inset 4px 4px 15px 0px #6c6868, 5px 5px 15px 5px rgb(0 0 0 / 0%)").set("display","inline-block").set("margin","100px auto").set("border","1px solid black").set("padding","10px").set("border-radius","20px");
-        titleContainerAbsences.getStyle().set("border"," 1px solid").set(
-                "background","var(--theme-color)").set(
-                "width"," 80%").set(
-                "height"," fit-content").set(
-                "margin","-50px auto 20px").set(
-                "border-radius"," 30px").set(
-                "text-align"," center").set("padding","20px");
+        if (employee.getEmail().equalsIgnoreCase("nadia@gmail.com")){
+            titleContainerAbsences.getStyle().set("border"," 1px solid").set(
+                    "background","var(--nadia-color)").set(
+                    "width"," 80%").set(
+                    "height"," fit-content").set(
+                    "margin","-50px auto 20px").set(
+                    "border-radius"," 30px").set(
+                    "text-align"," center").set("padding","20px");
+        }else{
+            titleContainerAbsences.getStyle().set("border"," 1px solid").set(
+                    "background","var(--theme-color)").set(
+                    "width"," 80%").set(
+                    "height"," fit-content").set(
+                    "margin","-50px auto 20px").set(
+                    "border-radius"," 30px").set(
+                    "text-align"," center").set("padding","20px");
+        }
         titleAbsences.getStyle().set("color","white").set("margin","auto").set("display","inline-block");
     }
 
     private  void styleDelays(){
         delays.setWidth("90%");
         delays.getStyle().set("background","#f1f1f1").set("box-shadow"," inset 4px 4px 15px 0px #6c6868, 5px 5px 15px 5px rgb(0 0 0 / 0%)").set("display","inline-block").set("margin","100px auto").set("border","1px solid black").set("padding","10px").set("border-radius","20px").set("margin-bottom","0");
-        titleContainerDelays.getStyle().set("border"," 1px solid").set(
-                "background","var(--theme-color)").set(
-                "width"," 80%").set(
-                "height"," fit-content").set(
-                "margin","-50px auto 20px").set(
-                "border-radius"," 30px").set(
-                "text-align"," center").set("padding","20px");
+        if (employee.getEmail().equalsIgnoreCase("nadia@gmail.com")){
+            titleContainerDelays.getStyle().set("border"," 1px solid").set(
+                    "background","var(--nadia-color)").set(
+                    "width"," 80%").set(
+                    "height"," fit-content").set(
+                    "margin","-50px auto 20px").set(
+                    "border-radius"," 30px").set(
+                    "text-align"," center").set("padding","20px");
+        }else{
+            titleContainerDelays.getStyle().set("border"," 1px solid").set(
+                    "background","var(--theme-color)").set(
+                    "width"," 80%").set(
+                    "height"," fit-content").set(
+                    "margin","-50px auto 20px").set(
+                    "border-radius"," 30px").set(
+                    "text-align"," center").set("padding","20px");
+        }
         titleDelays.getStyle().set("color","white").set("margin","auto").set("display","inline-block");
     }
 
     private  void styleOvertime(){
         overtime.setWidth("90%");
         overtime.getStyle().set("background","#f1f1f1").set("box-shadow"," inset 4px 4px 15px 0px #6c6868, 5px 5px 15px 5px rgb(0 0 0 / 0%)").set("display","inline-block").set("margin","100px auto").set("border","1px solid black").set("padding","10px").set("border-radius","20px").set("margin-bottom","0");
-        titleContainerOvertime.getStyle().set("border"," 1px solid").set(
-                "background","var(--theme-color)").set(
-                "width"," 80%").set(
-                "height"," fit-content").set(
-                "margin","-50px auto 20px").set(
-                "border-radius"," 30px").set(
-                "text-align"," center").set("padding","20px");
+        if (employee.getEmail().equalsIgnoreCase("nadia@gmail.com")){
+            titleContainerOvertime.getStyle().set("border"," 1px solid").set(
+                    "background","var(--nadia-color)").set(
+                    "width"," 80%").set(
+                    "height"," fit-content").set(
+                    "margin","-50px auto 20px").set(
+                    "border-radius"," 30px").set(
+                    "text-align"," center").set("padding","20px");
+        }else{
+            titleContainerOvertime.getStyle().set("border"," 1px solid").set(
+                    "background","var(--theme-color)").set(
+                    "width"," 80%").set(
+                    "height"," fit-content").set(
+                    "margin","-50px auto 20px").set(
+                    "border-radius"," 30px").set(
+                    "text-align"," center").set("padding","20px");
+        }
         titleOvertime.getStyle().set("color","white").set("margin","auto").set("display","inline-block");
         endStylingDiv.setMinHeight("50px");
         endStylingDiv.setWidthFull();
@@ -469,13 +512,23 @@ total.getStyle().set("margin","0 auto");
     private void stylePersonalInfoSpans(){
         personalInformation.setWidth("80%");
         personalInformation.getStyle().set("min-height","18.625rem").set("background","#f1f1f1").set("box-shadow"," inset 4px 4px 15px 0px #6c6868, 5px 5px 15px 5px rgb(0 0 0 / 0%)").set("margin","100px auto").set("margin-bottom","20px").set("border","1px solid black").set("padding","10px").set("border-radius","20px");
-        titleContainerPersonalInfo.getStyle().set("border"," 1px solid").set(
-                "background","var(--theme-color)").set(
-                "width"," 80%").set(
-                "height"," fit-content").set(
-                "margin","-50px auto 20px").set(
-                "border-radius"," 30px").set(
-                "text-align"," center").set("padding","20px");
+        if (employee.getEmail().equalsIgnoreCase("nadia@gmail.com")){
+            titleContainerPersonalInfo.getStyle().set("border"," 1px solid").set(
+                    "background","var(--nadia-color)").set(
+                    "width"," 80%").set(
+                    "height"," fit-content").set(
+                    "margin","-50px auto 20px").set(
+                    "border-radius"," 30px").set(
+                    "text-align"," center").set("padding","20px");
+        }else{
+            titleContainerPersonalInfo.getStyle().set("border"," 1px solid").set(
+                    "background","var(--theme-color)").set(
+                    "width"," 80%").set(
+                    "height"," fit-content").set(
+                    "margin","-50px auto 20px").set(
+                    "border-radius"," 30px").set(
+                    "text-align"," center").set("padding","20px");
+        }
         titlePersonalInfo.getStyle().set("color","white").set("margin","auto").set("display","inline-block");
         fullName.getStyle().set("text-align","center");
         picture.setMaxWidth("200px");
@@ -502,13 +555,23 @@ total.getStyle().set("margin","0 auto");
         // Style box
         personalInformation.setWidth("80%");
         personalInformation.getStyle().set("box-shadow"," inset 4px 4px 15px 0px #6c6868, 5px 5px 15px 5px rgb(0 0 0 / 0%)").set("margin","100px auto").set("margin-bottom","10px").set("border","1px solid black").set("padding","10px").set("border-radius","20px");
-        titleContainerPersonalInfo.getStyle().set("border"," 1px solid").set(
-                "background","var(--theme-color)").set(
-                "width"," 80%").set(
-                "height"," fit-content").set(
-                "margin","-50px auto 20px").set(
-                "border-radius"," 30px").set(
-                "text-align"," center").set("padding","20px");
+        if (employee.getEmail().equalsIgnoreCase("nadia@gmail.com")){
+            titleContainerPersonalInfo.getStyle().set("border"," 1px solid").set(
+                    "background","var(--nadia-color)").set(
+                    "width"," 80%").set(
+                    "height"," fit-content").set(
+                    "margin","-50px auto 20px").set(
+                    "border-radius"," 30px").set(
+                    "text-align"," center").set("padding","20px");
+        }else{
+            titleContainerPersonalInfo.getStyle().set("border"," 1px solid").set(
+                    "background","var(--theme-color)").set(
+                    "width"," 80%").set(
+                    "height"," fit-content").set(
+                    "margin","-50px auto 20px").set(
+                    "border-radius"," 30px").set(
+                    "text-align"," center").set("padding","20px");
+        }
         titlePersonalInfo.getStyle().set("color","white").set("margin","auto").set("display","inline-block");
 //        Style form
         //        Style Image uploader

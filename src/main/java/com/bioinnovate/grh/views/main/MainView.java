@@ -94,6 +94,12 @@ public class MainView extends AppLayout {
         layout2.setSpacing(false);
         layout2.setAlignItems(FlexComponent.Alignment.CENTER);
         layout2.add(menu);
+
+        if (employee.getEmail().equalsIgnoreCase("nadia@gmail.com")){
+            layout.getStyle().set("background","var(--nadia-color)");
+            layout2.getStyle().set("background","var(--nadia-color)");
+        }
+
         verticalLayout.add(layout,layout2);
         return verticalLayout;
     }

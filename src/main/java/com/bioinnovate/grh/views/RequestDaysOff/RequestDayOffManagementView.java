@@ -50,25 +50,54 @@ import java.util.Optional;
 @Secured({"ADMIN","SUPER USER"})
 public class RequestDayOffManagementView extends Div {
 
+    private final Div container;
+    private Div content;
     private RequestDayOff requestDayOff = new RequestDayOff();
     private final Grid<RequestDayOff> requestDayOffGrid = new Grid<>(RequestDayOff.class,false);
     private final Employee employee;
+    private FullCalendar calendar;
 
     public RequestDayOffManagementView(@Autowired EmployeeService employeeService, @Autowired RequestDayOffService requestDayOffService,
                                        @Autowired DepartmentService departmentService, @Autowired DelaysService delaysService,
                                        @Autowired AbsenceService absenceService, @Autowired DaysOffService daysOffService){
+//        Select User
         VaadinSession session = VaadinSession.getCurrent();
         employee = employeeService.findEmployeeByEmail(session.getAttribute("username").toString());
 
-        Div container = new Div();
+//        Create UI
+        container = new Div();    // container of the calendar
+        Div container2 = new Div();  // container of the grid and the request details
+        content = new Div();    // container of the request details
+        //  Initial view should contain the grid
+        requestDayOffGrid.setVisible(true);
+        content.setVisible(false);
+
+        H1 title = new H1("Demande de Congé");
+        title.getStyle().set("margin","10px auto");
+        container2.add(title);
+        container2.add(requestDayOffGrid,content);
+//        Style UI
+        container.setWidth("55%");
         container.getElement().getStyle().set("display", "flex");
         container.getElement().getStyle().set("flex-direction", "column");
-        container.getElement().getStyle().set("height", "100%").set("width","90%").set("margin","25px auto");
+        container.getElement().getStyle().set("height", "100%").set("margin","25px auto");
+        container2.setWidth("35%");
+        container2.getElement().getStyle().set("display", "flex");
+        container2.getElement().getStyle().set("flex-direction", "column");
+        container2.getElement().getStyle().set("height", "100%").set("margin","25px auto");
+        HorizontalLayout mainLayout = new HorizontalLayout();
+        mainLayout.add(container, container2);
+        add(mainLayout);
 
-        List<RequestDayOff> data = requestDayOffService.findRequestDayOffByDepartmentId(employee.getDepartment().getId());
+        configureCalendar(requestDayOffService);
+        configureGrid(requestDayOffService,delaysService,absenceService,employeeService,daysOffService);
+        configureZoneRouge(departmentService);
 
+    }
+
+    private void configureCalendar(RequestDayOffService requestDayOffService){
         // Create a new calendar instance and attach it to our layout
-        FullCalendar calendar = FullCalendarBuilder.create().build();
+        calendar = FullCalendarBuilder.create().build();
         calendar.setWidthFull();
         calendar.getStyle().set("height","100vh");
         calendar.setColumnHeader(true);
@@ -84,9 +113,18 @@ public class RequestDayOffManagementView extends Div {
         calendar.setWeekNumbersVisible(false);
         container.add(calendar);
 
+        addEntriesToCalendar(requestDayOffService);
+
+        addDaySelectedListener(requestDayOffService);
+    }
+
+    private void addEntriesToCalendar(RequestDayOffService requestDayOffService){
+        //        Fill Calendar with data
+        List<RequestDayOff> data = requestDayOffService.findRequestDayOffByDepartmentId(employee.getDepartment().getId());
         for (RequestDayOff requestDayOff: data){
             // Create an initial sample entry
             Entry entry = new Entry();
+            entry.setEditable(false);
             entry.setTitle(requestDayOff.getEmployee().getFirstName()+" "+requestDayOff.getEmployee().getLastName() );
             if (requestDayOff.getStatus().equalsIgnoreCase("En attente")){
                 entry.setColor("orange");
@@ -98,44 +136,42 @@ public class RequestDayOffManagementView extends Div {
             // the given times will be interpreted as utc based - useful when the times are fetched from your database
             entry.setStart(requestDayOff.getDateBegin().toLocalDate());
             entry.setEnd(entry.getStart().plusDays(requestDayOff.getDuration()));
+            entry.setAllDay(true);
             calendar.addEntry(entry);
         }
+    }
 
+    private void addDaySelectedListener(RequestDayOffService requestDayOffService){
+        //        Add on click effect when user click on the calendar date
+        calendar.addTimeslotsSelectedListener(event -> {
+            List<RequestDayOff> dataGrid = requestDayOffService.findRequestDayOffByDepartmentIdAndDateBegin(employee.getDepartment().getId(),Date.valueOf(event.getStart().toLocalDate()));
+            requestDayOffGrid.setDataProvider(new ListDataProvider<>(dataGrid));
+            content.setVisible(false);
+            requestDayOffGrid.setVisible(true);
+        });
+    }
 
-        Div container2 = new Div();
+    private void configureGrid(RequestDayOffService requestDayOffService,DelaysService delaysService,
+                               AbsenceService absenceService,EmployeeService employeeService,DaysOffService daysOffService){
+
         requestDayOffGrid.addColumn(new ComponentRenderer<>(requestDayOff -> new Text(requestDayOff.getEmployee().getName()))).setHeader("Employée");
         requestDayOffGrid.addColumn("dateBegin");
         requestDayOffGrid.addColumn("duration");
         requestDayOffGrid.getColumnByKey("dateBegin").setHeader("Date de début");
         requestDayOffGrid.getColumnByKey("duration").setHeader("Durée");
 
-        H1 title = new H1("Demande de Congé");
-        title.getStyle().set("margin","10px auto");
-        container2.add(title);
-        container2.add(requestDayOffGrid);
+        addGridsRowSelectionClickListener(requestDayOffService,delaysService,absenceService,employeeService,daysOffService);
 
-        calendar.addTimeslotsSelectedListener(event -> {
-            container2.removeAll();
-            container2.add(title);
-            List<RequestDayOff> dataGrid = requestDayOffService.findRequestDayOffByDepartmentIdAndDateBegin(employee.getDepartment().getId(),Date.valueOf(event.getStart().toLocalDate()));
-            requestDayOffGrid.setDataProvider(new ListDataProvider<>(dataGrid));
-            container2.add(requestDayOffGrid);
-        });
-        try {
-            Department department = employee.getDepartment();
-            Entry redZone = new Entry();
-            redZone.setColor("red");
-            redZone.setTitle("Zone Rouge ! Pas de congés pendant cette période");
-            redZone.setStart(department.getDateRedZone().toLocalDate());
-            redZone.setEnd(redZone.getStart().plusDays(department.getDurationRedZone()));
-            calendar.addEntry(redZone);
-        }catch (Exception ignored){
+    }
 
-        }
+    private void addGridsRowSelectionClickListener(RequestDayOffService requestDayOffService,DelaysService delaysService,
+                                                   AbsenceService absenceService,EmployeeService employeeService,DaysOffService daysOffService){
+
         requestDayOffGrid.asSingleSelect().addValueChangeListener(event -> {
-            Div content = new Div();
-            container2.removeAll();
-            container2.add(title);
+            requestDayOffGrid.setVisible(false);
+            content.removeAll();
+            content.setVisible(true);
+
             if (event.getValue() != null) {
                 Optional<RequestDayOff> requestDayOffFromBackend = requestDayOffService.get(event.getValue().getId());
                 // when a row is selected but the data is no longer available, refresh grid
@@ -147,97 +183,112 @@ public class RequestDayOffManagementView extends Div {
                 requestDayOffGrid.getDataProvider().refreshAll();
             }
 
-
-            Span name = new Span("Nom : " + requestDayOff.getEmployee().getName());
-            name.setWidth("100%");
-            name.getStyle().set("margin","10px auto").set("display","inline-block");
-
-
-            Span dateBegin = new Span("Date : " + requestDayOff.getDateBegin().toLocalDate());
-            dateBegin.setWidth("100%");
-            dateBegin.getStyle().set("margin","10px auto").set("display","inline-block");
-
-            Span duration = new Span("Durée : " + requestDayOff.getDuration()+" jours");
-            duration.getStyle().set("margin","10px auto").set("width","100%").set("display","inline-block");
-
-            VerticalLayout verticalLayout = new VerticalLayout(name,dateBegin,duration);
-
-            Span reason = new Span("Raison : " + requestDayOff.getReason());
-            reason.setWidth("100%");
-            reason.getStyle().set("margin", "10px auto");
-            verticalLayout.add(reason);
-
-            TextArea comment = new TextArea("Commentaire");
-            comment.setWidth("90%");
-            comment.getStyle().set("margin","10px auto");
-            try{
-                comment.setValue(requestDayOff.getComment());
-            }catch(Exception ignored){
-
-            }
-            verticalLayout.add(comment);
-
-            Button accept = new Button("Accepter");
-            accept.addThemeVariants(ButtonVariant.LUMO_SUCCESS);
-            accept.setIcon(new Icon(VaadinIcon.CHECK));
-            accept.setWidthFull();
-            accept.addClickListener(event1 -> {
-                requestDayOff.setStatus("Accepté");
-                DaysOff daysOff = new DaysOff();
-                if (requestDayOff.getDateBegin().toLocalDate().compareTo(LocalDate.now()) == 0){
-                    daysOff.setReason(requestDayOff.getReason());
-                    daysOff.setDateBegin(requestDayOff.getDateBegin());
-                    daysOff.setDateEnd(Date.valueOf(requestDayOff.getDateBegin().toLocalDate().plusDays(requestDayOff.getDuration())));
-                    Employee employee = requestDayOff.getEmployee();
-                    UpdateSoldeDaysOff.update(delaysService,absenceService,employeeService,employee);
-                    employee.setInDaysOff(true);
-                    employee.setDaysOffLeft(employee.getDaysOffLeft()-requestDayOff.getDuration());
-                    daysOff.setEmployee(employee);
-                    daysOffService.update(daysOff);
-                    employeeService.update(employee);
-                }
-                requestDayOffService.update(requestDayOff);
-                container2.removeAll();
-                container2.add(title);
-                requestDayOffGrid.getDataProvider().refreshAll();
-                container2.add(requestDayOffGrid);
-                UI.getCurrent().getPage().reload();
-            });
-
-            Button deny = new Button("Refuser");
-            deny.addThemeVariants(ButtonVariant.LUMO_ERROR);
-            deny.setIcon(new Icon(VaadinIcon.TRASH));
-            deny.setWidthFull();
-            deny.addClickListener(event1 -> {
-                requestDayOff.setStatus("Refusée");
-                requestDayOffService.update(requestDayOff);
-                container2.removeAll();
-                container2.add(title);
-                requestDayOffGrid.getDataProvider().refreshAll();
-                container2.add(requestDayOffGrid);
-                UI.getCurrent().getPage().reload();
-            });
-            Button cancel = new Button("Annuler");
-            cancel.setWidthFull();
-            cancel.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
-            cancel.setIcon(new Icon(VaadinIcon.CLOSE));
-            cancel.addClickListener(event1 -> {
-                container2.removeAll();
-                container2.add(title);
-                requestDayOffGrid.getDataProvider().refreshAll();
-                container2.add(requestDayOffGrid);
-            });
-            if (requestDayOff.getDateBegin().toLocalDate().compareTo(LocalDate.now()) < 0 ){
-                accept.setEnabled(false);
-                deny.setEnabled(false);
-            }
-
-            HorizontalLayout buttonLayout = new HorizontalLayout(accept,cancel,deny);
-
-            content.add(verticalLayout,buttonLayout);
-            container2.add(content);
+            createDaysOffRequestDetailsUI(requestDayOffService,delaysService,absenceService,employeeService,daysOffService);
         });
+    }
 
+    private void createDaysOffRequestDetailsUI(RequestDayOffService requestDayOffService,DelaysService delaysService,
+                                               AbsenceService absenceService,EmployeeService employeeService,DaysOffService daysOffService){
+        Span name = new Span("Nom : " + requestDayOff.getEmployee().getName());
+        name.setWidth("100%");
+        name.getStyle().set("margin","10px auto").set("display","inline-block");
+
+        Span dateBegin = new Span("Date : " + requestDayOff.getDateBegin().toLocalDate());
+        dateBegin.setWidth("100%");
+        dateBegin.getStyle().set("margin","10px auto").set("display","inline-block");
+
+        Span duration = new Span("Durée : " + requestDayOff.getDuration()+" jours");
+        duration.getStyle().set("margin","10px auto").set("width","100%").set("display","inline-block");
+
+        Span reason = new Span("Raison : " + requestDayOff.getReason());
+        reason.setWidth("100%");
+        reason.getStyle().set("margin", "10px auto");
+
+        TextArea comment = new TextArea("Commentaire");
+        comment.setWidth("90%");
+        comment.getStyle().set("margin","10px auto");
+        try{
+            comment.setValue(requestDayOff.getComment());
+        }catch(Exception ignored){}
+
+        VerticalLayout verticalLayout = new VerticalLayout(name,dateBegin,duration,reason,comment);
+
+//            Create Button Layout
+        Button accept = new Button("Accepter");
+        accept.addThemeVariants(ButtonVariant.LUMO_SUCCESS);
+        accept.setIcon(new Icon(VaadinIcon.CHECK));
+        accept.setWidthFull();
+        accept.addClickListener(event1 -> acceptButton(requestDayOffService,delaysService,absenceService,employeeService,daysOffService));
+
+        Button deny = new Button("Refuser");
+        deny.addThemeVariants(ButtonVariant.LUMO_ERROR);
+        deny.setIcon(new Icon(VaadinIcon.TRASH));
+        deny.setWidthFull();
+        deny.addClickListener(event1 -> denyButton(requestDayOffService) );
+
+        Button cancel = new Button("Annuler");
+        cancel.setWidthFull();
+        cancel.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        cancel.setIcon(new Icon(VaadinIcon.CLOSE));
+        cancel.addClickListener(event1 -> cancelButton());
+
+//            Denying access to crud operations when days off date is already passed
+        if (requestDayOff.getDateBegin().toLocalDate().compareTo(LocalDate.now()) < 0 ){
+            accept.setEnabled(false);
+            deny.setEnabled(false);
+        }
+
+        HorizontalLayout buttonLayout = new HorizontalLayout(accept,cancel,deny);
+
+        content.add(verticalLayout,buttonLayout);
+    }
+
+    private void acceptButton(RequestDayOffService requestDayOffService,DelaysService delaysService,
+                              AbsenceService absenceService,EmployeeService employeeService,DaysOffService daysOffService){
+        requestDayOff.setStatus("Accepté");
+
+        DaysOff daysOff = new DaysOff();
+        if (requestDayOff.getDateBegin().toLocalDate().compareTo(LocalDate.now()) == 0){
+            daysOff.setReason(requestDayOff.getReason());
+            daysOff.setDateBegin(requestDayOff.getDateBegin());
+            daysOff.setDateEnd(Date.valueOf(requestDayOff.getDateBegin().toLocalDate().plusDays(requestDayOff.getDuration())));
+            Employee employee = requestDayOff.getEmployee();
+            UpdateSoldeDaysOff.update(delaysService,absenceService,employeeService,employee);
+            employee.setInDaysOff(true);
+            employee.setDaysOffLeft(employee.getDaysOffLeft()-requestDayOff.getDuration());
+            daysOff.setEmployee(employee);
+            daysOffService.update(daysOff);
+            employeeService.update(employee);
+        }
+        requestDayOffService.update(requestDayOff);
+        UI.getCurrent().getPage().reload();
+    }
+
+    private void denyButton(RequestDayOffService requestDayOffService){
+        requestDayOff.setStatus("Refusée");
+        requestDayOffService.update(requestDayOff);
+        UI.getCurrent().getPage().reload();
+    }
+
+    private void cancelButton(){
+        content.setVisible(false);
+        requestDayOffGrid.setVisible(true);
+        requestDayOffGrid.getDataProvider().refreshAll();
+        System.out.println("step 3 : select cancel : " + content.isVisible());
+    }
+
+    private void configureZoneRouge(DepartmentService departmentService){
+        //        Add zone rouge to the calendar
+        try {
+            Department department = employee.getDepartment();
+            Entry redZone = new Entry();
+            redZone.setColor("red");
+            redZone.setTitle("Zone Rouge ! Pas de congés pendant cette période");
+            redZone.setStart(department.getDateRedZone().toLocalDate());
+            redZone.setEnd(redZone.getStart().plusDays(department.getDurationRedZone()));
+            calendar.addEntry(redZone);
+        }catch (Exception ignored){}
+//        Add zone rouge picker
         DatePicker dateRedZone = new DatePicker("Date du zone rouge");
         dateRedZone.setWidth("80%");
         dateRedZone.getStyle().set("margin","10px auto");
@@ -245,9 +296,7 @@ public class RequestDayOffManagementView extends Div {
         try {
             dateRedZone.setValue(departmentService.getDepartmentByName(employee.getDepartment().getName()).getDateRedZone().toLocalDate());
             durationRedZone.setValue(departmentService.getDepartmentByName(employee.getDepartment().getName()).getDurationRedZone());
-        }catch (Exception ignored){
-
-        }
+        }catch (Exception ignored){}
         durationRedZone.setHasControls(true);
         durationRedZone.getStyle().set("margin","10px 10%");
         HorizontalLayout horizontalLayout = new HorizontalLayout(dateRedZone,durationRedZone);
@@ -264,20 +313,6 @@ public class RequestDayOffManagementView extends Div {
             UI.getCurrent().getPage().reload();
         });
         container.add(horizontalLayout,save);
-
-        HorizontalLayout hor = new HorizontalLayout();
-        hor.add(container,container2);
-
-        container.setWidth("55%");
-
-        container2.setWidth("35%");
-        container2.getElement().getStyle().set("display", "flex");
-        container2.getElement().getStyle().set("flex-direction", "column");
-        container2.getElement().getStyle().set("height", "100%").set("margin","25px auto");
-
-        add(hor);
-
     }
-
 
 }

@@ -67,7 +67,7 @@ public class EmployeesView extends Div {
 
             HorizontalLayout row = new HorizontalLayout();
             row.setAlignItems(FlexComponent.Alignment.CENTER);
-
+            row.setClassName("row");
             Avatar avatar = new Avatar();
             avatar.setName(employee.getFirstName()+" "+employee.getLastName());
             if (employee.getPicture() == null){

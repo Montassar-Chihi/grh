@@ -1,5 +1,6 @@
 :root {
     --theme-color : linear-gradient(90deg, rgba(34,195,120,1) 0%, rgba(45,98,253,1) 100%) ;
+    --nadia-color : #cb3434;
 }
 
 #navbar {
@@ -9,6 +10,18 @@
 
 #tabs {
     margin:auto;
+}
+
+vaadin-item::before {
+    content:none;
+}
+
+vaadin-item:hover {
+    background:transparent;
+    cursor : pointer;
+}
+.row:hover {
+    background:#efefef;
 }
 
 #buttons-layout {
