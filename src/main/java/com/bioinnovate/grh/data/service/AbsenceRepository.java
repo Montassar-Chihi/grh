@@ -11,7 +11,7 @@ import java.util.List;
 
 public interface AbsenceRepository extends JpaRepository<Absences, Integer> {
 
-    @Query(value = "SELECT SUM(duration) From absences WHERE employee_id = :employee_id AND MONTH(absences.date) = :month AND YEAR(absences.date) = YEAR(CURRENT_TIMESTAMP) " ,
+    @Query(value = "SELECT SUM(duration) From absences WHERE employee_id = :employee_id AND MONTH(absences.date) = :month AND YEAR(absences.date) = YEAR(CURRENT_TIMESTAMP) AND justified = 0" ,
             nativeQuery = true)
     Double findAbsencesByEmployeeAndMonth(@Param("employee_id") int employeeId,@Param("month") int month);
 

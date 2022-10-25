@@ -71,26 +71,36 @@ public class UpdateSoldeDaysOff {
                 }
             }
         }
+
         Integer totalDays;
         Double totalDaysWorked;
         double totalDaysOffSolde = 0.0;
-        if ((user.getStartWorkDate().getMonth()+1 == 1) || (user.getStartWorkDate().getYear() != LocalDate.now().getYear())){
-            if (user.getStartWorkDate().getDate() == 1){
-                for (int i = 1; i < LocalDate.now().getMonth().getValue()+1 ; i++){
-                    totalDays = workDaysOfEachMonth.get(i-1);
-                    totalDaysWorked = totalDays - totalRetardOfEachMonth.get(i-1) - totalAbsence.get(i-1);
+
+        if ( ( (user.getStartWorkDate().getMonth()+1 == 1) || (user.getStartWorkDate().getYear() != LocalDate.now().getYear()) )
+                && (user.getStartWorkDate().getDate() == 1) ){
+            if (user.getStartWorkDate().getMonth()+1 == 1){
+                for (int i = 1; i < LocalDate.now().getMonth().getValue() + 1; i++) {
+                    totalDays = workDaysOfEachMonth.get(i - 1);
+                    totalDaysWorked = totalDays - totalRetardOfEachMonth.get(i - 1) - totalAbsence.get(i - 1);
                     totalDaysOffSolde += 1.5 * (totalDaysWorked / totalDays);
                 }
             }else{
-                for (int i = user.getStartWorkDate().getMonth()+1; i < LocalDate.now().getMonth().getValue()+1 ; i++){
-                    if (i == user.getStartWorkDate().getMonth()+1) {
-                        totalDays = workDaysOfEachMonth.get(i-1) - countBusinessDaysBetween(new Date(user.getStartWorkDate().getYear(), user.getStartWorkDate().getMonth() + 1, 1).toLocalDate(), user.getStartWorkDate().toLocalDate());
-                    }else {
-                        totalDays = workDaysOfEachMonth.get(i-1) - user.getStartWorkDate().getDate() + 1 ;
-                    }
-                    totalDaysWorked = totalDays - totalRetardOfEachMonth.get(i-1) - totalAbsence.get(i-1);
+                for (int i = user.getStartWorkDate().getMonth()+1; i < LocalDate.now().getMonth().getValue() + 1; i++) {
+                    totalDays = workDaysOfEachMonth.get(i - 1);
+                    totalDaysWorked = totalDays - totalRetardOfEachMonth.get(i - 1) - totalAbsence.get(i - 1);
                     totalDaysOffSolde += 1.5 * (totalDaysWorked / totalDays);
                 }
+            }
+        }else{
+            for (int i = user.getStartWorkDate().getMonth()+1; i < LocalDate.now().getMonth().getValue()+1 ; i++){
+                System.out.println(i);
+                if (user.getStartWorkDate().getDate() != 1) {
+                    totalDays = workDaysOfEachMonth.get(i-1) - countBusinessDaysBetween(new Date(user.getStartWorkDate().getYear(), user.getStartWorkDate().getMonth(), 1).toLocalDate(), user.getStartWorkDate().toLocalDate());
+                }else {
+                    totalDays = workDaysOfEachMonth.get(i-1) - user.getStartWorkDate().getDate() + 1 ;
+                }
+                totalDaysWorked = totalDays - totalRetardOfEachMonth.get(i-1) - totalAbsence.get(i-1);
+                totalDaysOffSolde += 1.5 * (totalDaysWorked / totalDays);
             }
         }
         user.setDaysOffLeft(Math.round(totalDaysOffSolde*100)/100D);

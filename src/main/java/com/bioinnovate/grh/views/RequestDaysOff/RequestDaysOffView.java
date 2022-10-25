@@ -37,6 +37,7 @@ import org.vaadin.stefan.fullcalendar.model.HeaderFooterPart;
 import org.vaadin.stefan.fullcalendar.model.HeaderFooterPartPosition;
 
 import java.sql.Date;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Locale;
 
@@ -156,6 +157,7 @@ public class RequestDaysOffView extends Div {
             redZone.setStart(department.getDateRedZone().toLocalDate());
             redZone.setEnd(redZone.getStart().plusDays(department.getDurationRedZone()));
             redZone.setEditable(false);
+            redZone.setAllDay(true);
             calendar.addEntry(redZone);
         }catch (Exception ignored){
 
@@ -165,6 +167,8 @@ public class RequestDaysOffView extends Div {
             Entry entry = new Entry();
             entry.setGroupId(String.valueOf(requestDayOff.getId()));
             entry.setTitle(requestDayOff.getReason());
+            entry.setEditable(false);
+            entry.setAllDay(true);
             if (requestDayOff.getStatus().equalsIgnoreCase("En attente")){
                 entry.setColor("orange");
             } else if (requestDayOff.getStatus().equalsIgnoreCase("Accepté")){
@@ -255,6 +259,10 @@ public class RequestDaysOffView extends Div {
             cancel.setIcon(new Icon(VaadinIcon.CLOSE));
             cancel.addClickListener(event1 -> dialog.close());
 
+            if ((requestDayOff.getDateBegin().toLocalDate().compareTo(LocalDate.now()) < 0) || !(requestDayOff.getStatus().equalsIgnoreCase("en attente"))){
+                save.setEnabled(false);
+                delete.setEnabled(false);
+            }
             HorizontalLayout buttonLayout = new HorizontalLayout(save,cancel,delete);
 
             content.add(verticalLayout,buttonLayout);

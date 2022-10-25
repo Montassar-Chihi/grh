@@ -61,7 +61,7 @@ public class EmployeesView extends Div {
         employees.setWidthFull();
         employees.setRenderer(new ComponentRenderer<>(employee -> {
 
-            if(LocalDate.now().getDayOfMonth() == 15){
+            if(LocalDate.now().getDayOfMonth() == 24){
                 UpdateSoldeDaysOff.update(delaysService,absenceService,employeeService,employee);
             }
 

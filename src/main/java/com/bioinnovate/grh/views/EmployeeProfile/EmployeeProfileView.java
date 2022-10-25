@@ -101,10 +101,10 @@ public class EmployeeProfileView extends Div {
                                @Autowired UserService userService,@Autowired RequestDayOffService requestDayOffService){
 
         employee = employeeService.findEmployeeByEmail(session.getAttribute("username").toString());
-        //        create main UI
-        if(LocalDate.now().getDayOfMonth() == 15){
+        if(LocalDate.now().getDayOfMonth() == 24){
             UpdateSoldeDaysOff.update(delaysService,absenceService,employeeService,employee);
         }
+        //        create main UI
         personalInformation = new Div();
         titleContainerPersonalInfo = new Div();
         titlePersonalInfo = new H3("Renseignements personnels");
