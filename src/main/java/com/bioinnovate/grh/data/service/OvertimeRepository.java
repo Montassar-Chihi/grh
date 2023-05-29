@@ -11,13 +11,9 @@ import java.util.List;
 
 public interface OvertimeRepository extends JpaRepository<Overtime, Integer> {
 
-    @Query(value = "SELECT * From overtime WHERE employee_id = :employee_id AND MONTH(overtime.date) = MONTH(CURRENT_TIMESTAMP)" ,
+    @Query(value = "SELECT SUM(duration) FROM overtime WHERE MONTH(overtime.date) = MONTH(CURRENT_TIMESTAMP)" ,
             nativeQuery = true)
-    List<Overtime> findOvertimeByEmployeeId(@Param("employee_id") int employeeId);
-
-    @Query(value = "SELECT SUM(duration) From overtime WHERE employee_id = :employee_id AND MONTH(overtime.date) = MONTH(CURRENT_TIMESTAMP)" ,
-            nativeQuery = true)
-    Integer findTotalOvertimeByEmployeeId(@Param("employee_id") int employeeId);
+    Integer findTotalOvertime();
 
     @Modifying
     @Transactional

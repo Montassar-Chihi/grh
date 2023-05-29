@@ -15,6 +15,7 @@ import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.textfield.EmailField;
 import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.component.textfield.TextField;
@@ -71,8 +72,20 @@ public class AddEmployeeView extends Div {
         firstName = new TextField("Prénom");
         lastName = new TextField("Nom de la famille");
         codeCnss = new TextField("Code Cnss");
+        codeCnss.setPattern("\\d*");
+        codeCnss.setMaxLength(10);
+        codeCnss.setMinLength(10);
+        codeCnss.setErrorMessage("code CNSS doit avoir 10 chiffres");
         cin = new TextField("Cin");
+        cin.setPattern("\\d*");
+        cin.setMaxLength(8);
+        cin.setMinLength(8);
+        cin.setErrorMessage("CIN doit avoir 8 chiffres");
         phone = new TextField("Téléphone");
+        phone.setPattern("\\d*");
+        phone.setMaxLength(8);
+        phone.setMinLength(8);
+        phone.setErrorMessage("Téléphone doit avoir 8 chiffres");
         email = new EmailField("Email");
         salary = new TextField("Salaire");
         dinarPrefix = new Div();
@@ -163,8 +176,9 @@ public class AddEmployeeView extends Div {
         }
         try{
             employeeService.update(employee);
+            Notification.show("Employé(e) Ajoute(é)").addThemeVariants(NotificationVariant.LUMO_SUCCESS);
         }catch (Exception exception){
-            Notification.show("Email déja utilisé !");
+            Notification.show("Email déja utilisé !").addThemeVariants(NotificationVariant.LUMO_ERROR);
         }
     }
 

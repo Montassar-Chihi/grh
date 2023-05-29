@@ -12,6 +12,7 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Hr;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
@@ -21,16 +22,26 @@ import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.component.upload.Upload;
+import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.VaadinSession;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.annotation.Secured;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 @Route(value = "employees", layout = MainView.class)
@@ -47,7 +58,7 @@ public class EmployeesView extends Div {
     public EmployeesView(@Autowired EmployeeService employeeService, @Autowired AbsenceService absenceService,
                          @Autowired DelaysService delaysService, @Autowired DaysOffService daysOffService,
                          @Autowired OvertimeService overtimeService, @Autowired DepartmentService departmentService,
-                         @Autowired RequestDayOffService requestDayOffService,@Autowired UserService userService){
+                         @Autowired RequestDayOffService requestDayOffService, @Autowired UserService userService){
 
         VaadinSession session = VaadinSession.getCurrent();
         user = employeeService.findEmployeeByEmail(session.getAttribute("username").toString());
@@ -62,7 +73,7 @@ public class EmployeesView extends Div {
         employees.setRenderer(new ComponentRenderer<>(employee -> {
 
             if(LocalDate.now().getDayOfMonth() == 24){
-                UpdateSoldeDaysOff.update(delaysService,absenceService,employeeService,employee);
+//                UpdateSoldeDaysOff.update(delaysService,absenceService,employeeService,employee);
             }
 
             HorizontalLayout row = new HorizontalLayout();
@@ -95,7 +106,9 @@ public class EmployeesView extends Div {
             personalDetails.setSpacing(false);
             personalDetails.setWidth("90%");
 
-            Button delete = new Button(new Icon(VaadinIcon.TRASH));
+            Icon icon = new Icon(VaadinIcon.TRASH);
+            icon.setSize("1.75rem");
+            Button delete = new Button(icon);
             delete.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
             delete.addThemeVariants(ButtonVariant.LUMO_ERROR);
             delete.addClickListener(event -> {
@@ -150,9 +163,9 @@ public class EmployeesView extends Div {
         filterText.addValueChangeListener(e -> updateList(employeeService));
         filterText.setPrefixComponent(VaadinIcon.SEARCH.create());
         Button addEmployee = new Button(new Icon(VaadinIcon.PLUS));
-        addEmployee.setWidth("225px");
+        addEmployee.getStyle().set("min-width","200px").set("width","30%");
         addEmployee.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        addEmployee.setText("Ajouter Employée");
+        addEmployee.setText("Ajouter Employé(e)");
         addEmployee.addClickListener(event -> {
             Dialog dialog = new Dialog();
             dialog.setSizeFull();
@@ -176,7 +189,6 @@ public class EmployeesView extends Div {
         HorizontalLayout container = new HorizontalLayout(filterText,addEmployee);
         container.setWidthFull();
         verticalLayout.add(container,employees);
-
         add(verticalLayout);
     }
 

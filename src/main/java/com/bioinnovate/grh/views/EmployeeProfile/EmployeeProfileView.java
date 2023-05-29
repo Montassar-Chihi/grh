@@ -16,6 +16,7 @@ import com.vaadin.flow.component.html.*;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.*;
@@ -35,6 +36,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Date;
 import java.time.LocalDate;
+import java.util.List;
 
 @Route(value = "profile", layout = MainView.class)
 @RouteAlias(value = "", layout = MainView.class)
@@ -92,17 +94,19 @@ public class EmployeeProfileView extends Div {
     private Span daysOffAvailable;
     private Span contract;
     private ComboBox<String> contractField;
-    private Button print;
+    private Button reclamer;
     private Button openCv;
+    private HorizontalLayout personalInfoMainLayout;
 
     public EmployeeProfileView(@Autowired EmployeeService employeeService, @Autowired AbsenceService absenceService,
                                @Autowired DelaysService delaysService, @Autowired DaysOffService daysOffService,
                                @Autowired DepartmentService departmentService,@Autowired OvertimeService overtimeService,
-                               @Autowired UserService userService,@Autowired RequestDayOffService requestDayOffService){
+                               @Autowired UserService userService,@Autowired RequestDayOffService requestDayOffService,
+                               @Autowired ReclamationService reclamationService){
 
         employee = employeeService.findEmployeeByEmail(session.getAttribute("username").toString());
         if(LocalDate.now().getDayOfMonth() == 24){
-            UpdateSoldeDaysOff.update(delaysService,absenceService,employeeService,employee);
+//            UpdateSoldeDaysOff.update(delaysService,absenceService,employeeService,employee);
         }
         //        create main UI
         personalInformation = new Div();
@@ -110,7 +114,7 @@ public class EmployeeProfileView extends Div {
         titlePersonalInfo = new H3("Renseignements personnels");
         titleContainerPersonalInfo.add(titlePersonalInfo);
 
-        fillPersonalInformationSpans(employee,employeeService,departmentService,userService,requestDayOffService);
+        fillPersonalInformationSpans(employee, reclamationService, employeeService,departmentService,userService,requestDayOffService);
         horizontalLayoutForDelaysAndAbsences = new HorizontalLayout();
         horizontalLayoutForDelaysAndAbsences.setWidthFull();
         add(horizontalLayoutForDelaysAndAbsences);
@@ -132,15 +136,20 @@ public class EmployeeProfileView extends Div {
         Grid<Overtime> overtimeGrid = new Grid<>(Overtime.class);
         overtimeGrid.setColumns("date");
         totalSecondsOvertime = 0;
+        List<Overtime> overtimes = employee.getOvertime();
+        for (Overtime overtime : overtimes){
+            if(overtime.getDate().getMonth() == LocalDate.now().getMonthValue()-1){
+                totalSecondsOvertime += overtime.getDuration();
+            }
+        }
         overtimeGrid.addColumn(new ComponentRenderer<>(item -> {
             int s = item.getDuration();
-            totalSecondsOvertime += s;
             int sec = s % 60;
             int min = (s / 60)%60;
             int hours = (s/60)/60;
             return new Text(hours+"h : "+min+"min : "+sec+"sec");
         })).setHeader("Durée").setKey("duration");
-        ListDataProvider<Overtime> overtimeDataProvider = new ListDataProvider<>(overtimeService.findOvertimeByEmployee(employee.getId()));
+        ListDataProvider<Overtime> overtimeDataProvider = new ListDataProvider<>(employee.getOvertime());
         overtimeGrid.setDataProvider(overtimeDataProvider);
         overtime.add(titleContainerOvertime, overtimeGrid);
         styleOvertime();
@@ -164,7 +173,7 @@ public class EmployeeProfileView extends Div {
         daysOffGrid.addColumn("dateBegin").setHeader("Date de debut");
         daysOffGrid.addColumn("dateEnd").setHeader("Date de fin");
         daysOffGrid.addColumn("reason").setHeader("Raison");
-        ListDataProvider<DaysOff> daysOffDataProvider = new ListDataProvider<>(daysOffService.findDaysOffByEmployee(employee.getId()));
+        ListDataProvider<DaysOff> daysOffDataProvider = new ListDataProvider<>(employee.getDaysOff());
         daysOffGrid.setDataProvider(daysOffDataProvider);
         daysOff.add(titleContainerDaysOff, daysOffGrid);
         styleDaysOff();
@@ -238,15 +247,20 @@ public class EmployeeProfileView extends Div {
         Grid<Delays> delaysGrid = new Grid<>(Delays.class);
         delaysGrid.setColumns("date");
         totalSeconds = 0;
+        List<Delays> delaysList = employee.getDelays();
+        for (Delays delay:delaysList){
+            if(delay.getDate().getMonth() == LocalDate.now().getMonthValue()-1){
+                totalSeconds += delay.getDuration();
+            }
+        }
         delaysGrid.addColumn(new ComponentRenderer<>(item -> {
             int s = item.getDuration();
-            totalSeconds += s;
             int sec = s % 60;
             int min = (s / 60)%60;
             int hours = (s/60)/60;
             return new Text(hours+"h : "+min+"min : "+sec+"sec");
         })).setHeader("Durée").setKey("duration");
-        ListDataProvider<Delays> delaysDataProvider = new ListDataProvider<>(delaysService.findDelaysByEmployee(employee.getId()));
+        ListDataProvider<Delays> delaysDataProvider = new ListDataProvider<>(employee.getDelays());
         delaysGrid.setDataProvider(delaysDataProvider);
         delays.add(titleContainerDelays, delaysGrid);
         styleDelays();
@@ -269,7 +283,7 @@ public class EmployeeProfileView extends Div {
         absenceGrid.setColumns("date","duration","justified");
         absenceGrid.getColumnByKey("duration").setHeader("Durée");
         absenceGrid.getColumnByKey("justified").setHeader("Justifiée");
-        ListDataProvider<Absences> dataProvider = new ListDataProvider<>(absenceService.findAbsencesByEmployee(employee.getId()));
+        ListDataProvider<Absences> dataProvider = new ListDataProvider<>(employee.getAbsences());
         absenceGrid.setDataProvider(dataProvider);
         absences.add(titleContainerAbsences, absenceGrid);
         styleAbsences();
@@ -279,7 +293,7 @@ public class EmployeeProfileView extends Div {
 
     }
 
-    private void fillPersonalInformationSpans(Employee newEmployee, EmployeeService employeeService, DepartmentService departmentService,UserService userService,RequestDayOffService requestDayOffService){
+    private void fillPersonalInformationSpans(Employee newEmployee,ReclamationService reclamationService, EmployeeService employeeService, DepartmentService departmentService,UserService userService,RequestDayOffService requestDayOffService){
         if (newEmployee.getPicture() == null){
             if (newEmployee.getGender()){
                 picture = new Image("images/female.png", newEmployee.getFirstName()+" "+ newEmployee.getLastName()+" picture");
@@ -305,21 +319,25 @@ public class EmployeeProfileView extends Div {
         daysOffAvailable = new Span("Jours de Congés autorisés : " + newEmployee.getDaysOffLeft() + " jours");
         contract = new Span("Type de contrat : " + newEmployee.getContract());
         edit = new Button(new Icon(VaadinIcon.EDIT));
-        edit.addClickListener(event -> createEditPersonalInfo(newEmployee,employeeService,departmentService,userService,requestDayOffService));
-        print = new Button(new Icon(VaadinIcon.PRINT));
-        print.addClickListener(event -> print(employee));
+        edit.addClickListener(event -> createEditPersonalInfo(newEmployee,reclamationService,employeeService,departmentService,userService,requestDayOffService));
+        reclamer = new Button(new Icon(VaadinIcon.FILE));
+        reclamer.addClickListener(event -> reclame(reclamationService));
         openCv = new Button(new Icon(VaadinIcon.EYE));
         openCv.addClickListener(event -> new OpenPdf(employee.getContractPapers(), "contracts"));
-        personalInformation.add(titleContainerPersonalInfo,codeCnss,cin,phone,email,salary,contract,daysOffAvailable,daysOffLeft,position,department,edit,openCv);
+        personalInformation.add(titleContainerPersonalInfo,codeCnss,cin,phone,email,salary,contract,daysOffAvailable,daysOffLeft,position,department,edit,reclamer,openCv);
         stylePersonalInfoSpans();
-        add(picture,fullName,personalInformation);
+        VerticalLayout pictureNameLayout = new VerticalLayout(picture,fullName);
+        pictureNameLayout.getStyle().set("width","30%").set("flex-flow","column-reverse");
+        personalInfoMainLayout = new HorizontalLayout(pictureNameLayout, personalInformation);
+        personalInfoMainLayout.setWidthFull();
+        add(personalInfoMainLayout);
     }
 
-    private void createEditPersonalInfo(Employee employee, EmployeeService employeeService,DepartmentService departmentService, UserService userService,RequestDayOffService requestDayOffService){
+    private void createEditPersonalInfo(Employee employee,ReclamationService reclamationService, EmployeeService employeeService,DepartmentService departmentService, UserService userService,RequestDayOffService requestDayOffService){
 
 //        Remove spans to replace them with fields
-        remove(picture,fullName,personalInformation,horizontalLayoutForDelaysAndAbsences,horizontalLayoutForDaysOffAndOvertime,endStylingDiv);
-        personalInformation.remove(titleContainerPersonalInfo,codeCnss,cin,phone,email,salary,contract,daysOffAvailable,daysOffLeft,position,department,edit,openCv);
+        remove(personalInfoMainLayout,horizontalLayoutForDelaysAndAbsences,horizontalLayoutForDaysOffAndOvertime,endStylingDiv);
+        personalInformation.remove(titleContainerPersonalInfo,codeCnss,cin,phone,email,salary,contract,daysOffAvailable,daysOffLeft,position,department,edit,reclamer,openCv);
 
 //        Create fields
         personalInformation = new Div();
@@ -350,8 +368,12 @@ public class EmployeeProfileView extends Div {
         fillFields(employee);
 //        Add the components to their respective layouts
         titleContainerPersonalInfo.add(titlePersonalInfo);
-        personalInformation.add(titleContainerPersonalInfo, pictureMemoryUpload, password , confirmPassword , personalInformationButtonLayout);
-        add(picture,fullName,personalInformation,horizontalLayoutForDelaysAndAbsences,horizontalLayoutForDaysOffAndOvertime,endStylingDiv);
+        personalInformation.add(titleContainerPersonalInfo, password , confirmPassword , personalInformationButtonLayout);
+        VerticalLayout pictureNameLayout = new VerticalLayout(fullName, pictureMemoryUpload);
+        pictureNameLayout.getStyle().set("width","30%").set("flex-flow","column-reverse");
+        personalInfoMainLayout = new HorizontalLayout(pictureNameLayout, personalInformation);
+        personalInfoMainLayout.setWidthFull();
+        add(personalInfoMainLayout,horizontalLayoutForDelaysAndAbsences,horizontalLayoutForDaysOffAndOvertime,endStylingDiv);
         //        Style the fields
         styleFields();
 
@@ -363,19 +385,19 @@ public class EmployeeProfileView extends Div {
             }
             save(employee,employeeService);
 //            remove fields from main div to replace it with the spans
-            remove(picture,fullName,personalInformation,horizontalLayoutForDelaysAndAbsences,horizontalLayoutForDaysOffAndOvertime,endStylingDiv);
-            personalInformation.remove(titleContainerPersonalInfo, pictureMemoryUpload, password , confirmPassword , personalInformationButtonLayout);
+            remove(personalInfoMainLayout,horizontalLayoutForDelaysAndAbsences,horizontalLayoutForDaysOffAndOvertime,endStylingDiv);
+            personalInformation.remove(titleContainerPersonalInfo, password , confirmPassword , personalInformationButtonLayout);
 //            Fill the personal info spans
-            fillPersonalInformationSpans(employee,employeeService,departmentService,userService,requestDayOffService);
+            fillPersonalInformationSpans(employee, reclamationService, employeeService,departmentService,userService,requestDayOffService);
             add(horizontalLayoutForDelaysAndAbsences,horizontalLayoutForDaysOffAndOvertime,endStylingDiv);
         });
 
         cancel.addClickListener(event -> {
 //            remove fields from main div to replace it with the spans
-            remove(picture,fullName,personalInformation,horizontalLayoutForDelaysAndAbsences,horizontalLayoutForDaysOffAndOvertime,endStylingDiv);
-            personalInformation.remove(titleContainerPersonalInfo, pictureMemoryUpload, password , confirmPassword , personalInformationButtonLayout);
+            remove(personalInfoMainLayout,horizontalLayoutForDelaysAndAbsences,horizontalLayoutForDaysOffAndOvertime,endStylingDiv);
+            personalInformation.remove(titleContainerPersonalInfo, password , confirmPassword , personalInformationButtonLayout);
 //            Fill the personal info spans
-            fillPersonalInformationSpans(employee,employeeService,departmentService,userService,requestDayOffService);
+            fillPersonalInformationSpans(employee, reclamationService, employeeService,departmentService,userService,requestDayOffService);
             add(horizontalLayoutForDelaysAndAbsences,horizontalLayoutForDaysOffAndOvertime,endStylingDiv);
         });
 
@@ -403,20 +425,21 @@ public class EmployeeProfileView extends Div {
         }
         employeeService.update(employee);
         session.setAttribute("username",employee.getEmail());
+        Notification.show("Profil Modifié").addThemeVariants(NotificationVariant.LUMO_SUCCESS);
     }
 
     private void fillFields(Employee employee){
         firstNameField.setValue(employee.getFirstName());
         lastNameField.setValue(employee.getLastName());
         codeCnssField.setValue(String.valueOf(employee.getCodeCnss()));
-        cinField.setValue(String.valueOf(employee.getCin()));
+        cinField.setValue("0"+ employee.getCin());
         phoneField.setValue(String.valueOf(employee.getPhone()));
         emailField.setValue(employee.getEmail());
         contractField.setValue(employee.getContract());
     }
 
     private void styleDaysOff(){
-        daysOff.setWidth("90%");
+        daysOff.setWidth("100%");
         daysOff.getStyle().set("background","#f1f1f1").set("box-shadow"," inset 4px 4px 15px 0px #6c6868, 5px 5px 15px 5px rgb(0 0 0 / 0%)").set("margin","100px auto").set("border","1px solid black").set("padding","10px").set("border-radius","20px").set("margin-bottom","0");
         titleDaysOff.getStyle().set("color","white").set("margin","auto").set("display","inline-block");
         if (employee.getEmail().equalsIgnoreCase("nadia@gmail.com")){
@@ -439,7 +462,7 @@ public class EmployeeProfileView extends Div {
     }
 
     private void styleAbsences(){
-        absences.setWidth("90%");
+        absences.setWidth("100%");
         absences.getStyle().set("background","#f1f1f1").set("box-shadow"," inset 4px 4px 15px 0px #6c6868, 5px 5px 15px 5px rgb(0 0 0 / 0%)").set("display","inline-block").set("margin","100px auto").set("border","1px solid black").set("padding","10px").set("border-radius","20px");
         if (employee.getEmail().equalsIgnoreCase("nadia@gmail.com")){
             titleContainerAbsences.getStyle().set("border"," 1px solid").set(
@@ -462,7 +485,7 @@ public class EmployeeProfileView extends Div {
     }
 
     private  void styleDelays(){
-        delays.setWidth("90%");
+        delays.setWidth("100%");
         delays.getStyle().set("background","#f1f1f1").set("box-shadow"," inset 4px 4px 15px 0px #6c6868, 5px 5px 15px 5px rgb(0 0 0 / 0%)").set("display","inline-block").set("margin","100px auto").set("border","1px solid black").set("padding","10px").set("border-radius","20px").set("margin-bottom","0");
         if (employee.getEmail().equalsIgnoreCase("nadia@gmail.com")){
             titleContainerDelays.getStyle().set("border"," 1px solid").set(
@@ -485,7 +508,7 @@ public class EmployeeProfileView extends Div {
     }
 
     private  void styleOvertime(){
-        overtime.setWidth("90%");
+        overtime.setWidth("100%");
         overtime.getStyle().set("background","#f1f1f1").set("box-shadow"," inset 4px 4px 15px 0px #6c6868, 5px 5px 15px 5px rgb(0 0 0 / 0%)").set("display","inline-block").set("margin","100px auto").set("border","1px solid black").set("padding","10px").set("border-radius","20px").set("margin-bottom","0");
         if (employee.getEmail().equalsIgnoreCase("nadia@gmail.com")){
             titleContainerOvertime.getStyle().set("border"," 1px solid").set(
@@ -510,7 +533,7 @@ public class EmployeeProfileView extends Div {
     }
 
     private void stylePersonalInfoSpans(){
-        personalInformation.setWidth("80%");
+        personalInformation.setWidth("65%");
         personalInformation.getStyle().set("min-height","18.625rem").set("background","#f1f1f1").set("box-shadow"," inset 4px 4px 15px 0px #6c6868, 5px 5px 15px 5px rgb(0 0 0 / 0%)").set("margin","100px auto").set("margin-bottom","20px").set("border","1px solid black").set("padding","10px").set("border-radius","20px");
         if (employee.getEmail().equalsIgnoreCase("nadia@gmail.com")){
             titleContainerPersonalInfo.getStyle().set("border"," 1px solid").set(
@@ -530,7 +553,7 @@ public class EmployeeProfileView extends Div {
                     "text-align"," center").set("padding","20px");
         }
         titlePersonalInfo.getStyle().set("color","white").set("margin","auto").set("display","inline-block");
-        fullName.getStyle().set("text-align","center");
+        fullName.getStyle().set("text-align","center").set("width","100%");
         picture.setMaxWidth("200px");
         picture.getStyle().set("box-shadow","rgb(108 104 104) 4px 4px 15px 0px").set("border-radius","100px").set("text-align","center").set("display","block" ).set("margin","25px auto");
         codeCnss.getStyle().set("margin-left","20px").set("width","40%").set("display","inline-block").set("margin-bottom","15px");
@@ -545,15 +568,15 @@ public class EmployeeProfileView extends Div {
         contract.getStyle().set("margin-left","20px").set("width","40%").set("display","inline-block").set("margin-bottom","15px");
         edit.setText("Modifier les informations personnels");
         edit.getStyle().set("float","right").set("margin","20px 10px");
-        print.setText("Imprimer la fiche de paie");
-        print.getStyle().set("float","left").set("margin","20px 10px");
+        reclamer.setText("Reclamer");
+        reclamer.getStyle().set("float","left").set("margin","20px 10px");
         openCv.setText("Voir le contrat");
         openCv.getStyle().set("float","left").set("margin","20px 10px");
     }
 
     private void styleFields() {
         // Style box
-        personalInformation.setWidth("80%");
+        personalInformation.setWidth("65%");
         personalInformation.getStyle().set("box-shadow"," inset 4px 4px 15px 0px #6c6868, 5px 5px 15px 5px rgb(0 0 0 / 0%)").set("margin","100px auto").set("margin-bottom","10px").set("border","1px solid black").set("padding","10px").set("border-radius","20px");
         if (employee.getEmail().equalsIgnoreCase("nadia@gmail.com")){
             titleContainerPersonalInfo.getStyle().set("border"," 1px solid").set(
@@ -582,8 +605,8 @@ public class EmployeeProfileView extends Div {
         pictureMemoryUpload.setUploadButton(uploadButton);
         pictureMemoryUpload.setDropLabel(dropLabel);
         pictureMemoryUpload.setDropLabelIcon(dropIcon);
-        pictureMemoryUpload.setWidth("30%");
-        pictureMemoryUpload.getStyle().set("margin","0 auto");
+        pictureMemoryUpload.setWidth("80%");
+        pictureMemoryUpload.getStyle().set("margin","0.75rem auto");
 //        Style rest of the form
         firstNameField.getStyle().set("width","45%").set("max-height","55px").set("margin","0% 2%").set("display","inline-block");
         lastNameField.getStyle().set("width","45%").set("max-height","55px").set("margin","0% 2%").set("display","inline-block");
@@ -603,12 +626,38 @@ public class EmployeeProfileView extends Div {
         cancel.setWidthFull();
     }
 
-    private void print(Employee employee){
-        String script = "var WinPrint = window.open('', '', 'width=900,height=650');" +
-                "WinPrint.document.write(\"<style>    .title{        align-content: center;    }    div{        border: 1px solid black;        padding: 0;    }    .bold {        font-weight: bold;    }    .capital{        text-transform : uppercase;    }    .center{        text-align: center;    }    .tableColumn{        display: inline-block;        position: relative;        top: 0px;        margin: -2px;    }    #salaryElement{        width: 40.3%;    }    #daysNumber{        width: 19%;    }    #renum{        width: 20%;    }    #retenues{        width: 20%;    }    p {        margin-left: 5px;    }    .whiteSpace{        color: transparent;    }    #personalInfo p {        font-size: 12px;    }    #headerTitle{        font-size: 25px;    }</style><div id='container'>    <div id='header'>        <H1 id='headerTitle' style='margin-left: 3px;'>International Bio Service</H1>        <p>3 Impasse Abdelaziz EL SAOUD - 2092 - EL Manar</p>        <p>CNSS : 206203-78</p>    </div>    <div class='title'>        <h1 class='center'>Bulletin de paie</h1>    </div>    <div id='personalInfo'>        <p class='capital'>Cin : "+employee.getCin()+"</p>        <p class='capital'>Nom Et Prénom : "+employee.getName()+"</p>        <p class='capital'>Qualification : "+employee.getPosition()+"</p>        <p class='capital'>Immat CNSS : "+employee.getCodeCnss()+"</p>        <p class='capital'>SIT FAM : </p>        <p class='capital'>ENF : </p>        <p class='capital'>Mois : "+ LocalDate.now().getMonth().name()+" "+LocalDate.now().getYear()+"</p>    </div>    <div id='tableOfPay'>        <div class='tableColumn' id='salaryElement'>            <div class='title'>                <h5 class='capital bold center'>éléments de salaire</h5>            </div>            <div>               <p>salaire de base</p>               <p>Prime de présence</p>               <p>prime de transport</p>               <p class='whiteSpace'>white space</p>               <p class='whiteSpace'>white space</p>               <p class='center capital'>salaire brut</p>               <p>cotisations CNSS</p>               <p class='whiteSpace'>white space</p>               <p class='center capital'>salaire imposable</p>               <p>IRPP</p>               <p>CSS</p>            </div>        </div>        <div class='tableColumn' id='daysNumber'>            <div class='title'>                <h5 class='capital bold center'>Nombre de jours</h5>            </div>            <div>                <p class='whiteSpace'>white space</p>                <p class='whiteSpace'>white space</p>                <p class='whiteSpace'>white space</p>                <p class='whiteSpace'>white space</p>                <p class='whiteSpace'>white space</p>                <p class='whiteSpace'>white space</p>                <p class='whiteSpace'>white space</p>                <p class='whiteSpace'>white space</p>                <p class='whiteSpace'>white space</p>                <p class='whiteSpace'>white space</p>                <p class='whiteSpace'>white space</p>            </div>        </div>        <div class='tableColumn' id='renum'>            <div class='title'>                <h5 class='capital bold center'>rémunérations</h5>            </div>            <div>                <p>1090.173</p>                <p>11.643</p>                <p>61.808</p>                <p class='whiteSpace'>white space</p>                <p class='whiteSpace'>white space</p>                <p>1163.624</p>                <p class='whiteSpace'>white space</p>                <p class='whiteSpace'>white space</p>                <p>1056.803</p>                <p class='whiteSpace'>white space</p>                <p class='whiteSpace'>white space</p>            </div>        </div>        <div class='tableColumn' id='retenues'>            <div class='title'>                <h5 class='capital bold center'>retenues</h5>            </div>            <div>                <p class='whiteSpace'>white space</p>                <p class='whiteSpace'>white space</p>                <p class='whiteSpace'>white space</p>                <p class='whiteSpace'>white space</p>                <p class='whiteSpace'>white space</p>                <p class='whiteSpace'>white space</p>                <p>106.821</p>                <p class='whiteSpace'>white space</p>                <p class='whiteSpace'>white space</p>                <p>147.292</p>                <p>9.511</p>            </div>        </div>    </div>    <div style='width: 100%;border: none;'>        <p class='bold capital' style='display: inline-block;'> Net a payer</p>        <p style='float:right; display: inline-block; margin-right: 7px;'>"+employee.getSalary()+"</p>    </div></div>\");" +
-                "WinPrint.document.close();" +
-                "WinPrint.focus();" +
-                "WinPrint.print();";
-        getElement().executeJs(script);
+    private void reclame(ReclamationService reclamationService){
+        Dialog dialog = new Dialog();
+        dialog.setWidth("50%");
+        Button closeDialog = new Button(new Icon(VaadinIcon.CLOSE));
+        closeDialog.addClickListener(e -> {
+            dialog.close();
+        });
+        closeDialog.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        closeDialog.getStyle().set("float","right").set("color","red");
+        dialog.add(closeDialog);
+        H3 title = new H3("Reclamation");
+        title.getStyle().set("margin","1rem auto");
+
+        TextArea message = new TextArea("Message");
+        message.setWidthFull();
+
+        Button button = new Button("Envoyer");
+        button.getStyle().set("width","10rem").set("margin","1rem auto");
+
+        button.addClickListener(event -> {
+            Reclamation reclamation = new Reclamation();
+            reclamation.setEmployee(employee);
+            reclamation.setDate(Date.valueOf(LocalDate.now()));
+            reclamation.setMessage(message.getValue());
+            reclamation.setDone(false);
+            reclamationService.update(reclamation);
+            message.clear();
+            Notification.show("Reclamation enovyé avec succées!").addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+        });
+
+        dialog.add(title,message,button);
+        add(dialog);
+        dialog.open();
     }
 }

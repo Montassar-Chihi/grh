@@ -2,14 +2,25 @@
     --theme-color : linear-gradient(90deg, rgba(34,195,120,1) 0%, rgba(45,98,253,1) 100%) ;
     --nadia-color : #cb3434;
 }
-
+body {
+    font-family : sans-serif !important;
+}
+span {
+    font-weight : 600;
+}
 #navbar {
     padding:0px !important;
     box-shadow: var(--lumo-box-shadow-m);
 }
-
+.grid .v-captiontext {
+  color: red;
+}
 #tabs {
     margin:auto;
+}
+
+vaadin-text-field[part="label"] {
+    font-size: var(--lumo-font-size-l);
 }
 
 vaadin-item::before {
@@ -85,17 +96,11 @@ vaadin-tab:hover {
 
 vaadin-tab[selected] {
   background-color: var(--lumo-primary-color-10pct);
-  color:  rgb(34 195 120);
+  color: black;
 }
-
-vaadin-button[theme=primary] {
-    background: linear-gradient(90deg, rgba(34,195,120,1) 0%, rgba(45,98,253,1) 100%);
+#vaadin-license-validation-notification-vaadin-chart{
+    display:none;
 }
-
-body {
-    font-family: cursive;
-}
-
 h3 {
     display: inline-block;
 }
@@ -106,4 +111,7 @@ h1 , h3{
 
 vaadin-button{
     cursor: pointer;
+}
+.v-system-error{
+    display: none;
 }

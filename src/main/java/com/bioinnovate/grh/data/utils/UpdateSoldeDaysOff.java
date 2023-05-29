@@ -1,5 +1,7 @@
 package com.bioinnovate.grh.data.utils;
 
+import com.bioinnovate.grh.data.entity.Absences;
+import com.bioinnovate.grh.data.entity.Delays;
 import com.bioinnovate.grh.data.entity.Employee;
 import com.bioinnovate.grh.data.service.AbsenceService;
 import com.bioinnovate.grh.data.service.DelaysService;
@@ -38,7 +40,15 @@ public class UpdateSoldeDaysOff {
         if (user.getStartWorkDate().getYear() != LocalDate.now().getYear()){
             for (int i = 1; i < LocalDate.now().getMonth().getValue() + 1; i++) {
                 try {
-                    totalRetardOfEachMonth.add(delaysService.findDelaysByEmployeeAndMonth(user.getId(), i) / (3600 * 24));
+                    double totalSeconds = 0;
+                    List<Delays> delaysList = user.getDelays();
+                    for (Delays delay:delaysList){
+                        totalSeconds = 0;
+                        if(delay.getDate().getMonth() == (i-1)){
+                            totalSeconds += delay.getDuration();
+                        }
+                    }
+                    totalRetardOfEachMonth.add(totalSeconds / (3600 * 24));
                 }catch (Exception e){
                     totalRetardOfEachMonth.add(0.0);
                 }
@@ -46,7 +56,15 @@ public class UpdateSoldeDaysOff {
         }else {
             for (int i = user.getStartWorkDate().getMonth() + 1; i < LocalDate.now().getMonth().getValue() + 1; i++) {
                 try {
-                    totalRetardOfEachMonth.add(delaysService.findDelaysByEmployeeAndMonth(user.getId(), i) / (3600 * 24));
+                    double totalSeconds = 0;
+                    List<Delays> delaysList = user.getDelays();
+                    for (Delays delay:delaysList){
+                        totalSeconds = 0;
+                        if(delay.getDate().getMonth() == (i-1)){
+                            totalSeconds += delay.getDuration();
+                        }
+                    }
+                    totalRetardOfEachMonth.add(totalSeconds / (3600 * 24));
                 }catch (Exception e){
                     totalRetardOfEachMonth.add(0.0);
                 }
@@ -57,7 +75,15 @@ public class UpdateSoldeDaysOff {
         if (user.getStartWorkDate().getYear() != LocalDate.now().getYear()){
             for (int i = 1; i < LocalDate.now().getMonth().getValue() + 1; i++) {
                 try{
-                    totalAbsence.add(absenceService.findAbsencesByEmployeeAndMonth(user.getId(), i) / 1);
+                    double totalSeconds = 0;
+                    List<Absences> absencesList = user.getAbsences();
+                    for (Absences absence :absencesList){
+                        totalSeconds = 0;
+                        if(absence.getDate().getMonth() == (i-1)){
+                            totalSeconds += absence.getDuration();
+                        }
+                    }
+                    totalAbsence.add(totalSeconds);
                 }catch (Exception e){
                     totalAbsence.add(0.0);
                 }
@@ -65,7 +91,15 @@ public class UpdateSoldeDaysOff {
         }else{
             for (int i = user.getStartWorkDate().getMonth() + 1; i < LocalDate.now().getMonth().getValue() + 1; i++) {
                 try{
-                    totalAbsence.add(absenceService.findAbsencesByEmployeeAndMonth(user.getId(), i) / 1);
+                    double totalSeconds = 0;
+                    List<Absences> absencesList = user.getAbsences();
+                    for (Absences absence :absencesList){
+                        totalSeconds = 0;
+                        if(absence.getDate().getMonth() == (i-1)){
+                            totalSeconds += absence.getDuration();
+                        }
+                    }
+                    totalAbsence.add(totalSeconds);
                 }catch (Exception e){
                     totalAbsence.add(0.0);
                 }
@@ -108,7 +142,7 @@ public class UpdateSoldeDaysOff {
         employeeService.update(user);
     }
 
-    private static int countBusinessDaysBetween(final LocalDate startDate,final LocalDate endDate){
+    public static int countBusinessDaysBetween(final LocalDate startDate,final LocalDate endDate){
         // Validate method arguments
         if (startDate == null || endDate == null) {
             throw new IllegalArgumentException("Invalid method argument(s) to countBusinessDaysBetween (" + startDate

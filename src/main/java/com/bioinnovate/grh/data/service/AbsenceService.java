@@ -24,9 +24,7 @@ public class AbsenceService extends CrudService<Absences, Integer> {
         return  repository.findAll();
     }
 
-    public List<Absences> findAbsencesByEmployee(int id){return repository.findAbsencesByEmployeeId(id);}
-
-    public Double findAbsencesByEmployeeAndMonth(int employeeId, int month){return repository.findAbsencesByEmployeeAndMonth(employeeId,month);}
+    public Double findAbsencesByMonth(){return repository.findAbsencesByMonth();}
 
     public void deleteAbsence(int absencesId){
         repository.deleteAbsence(absencesId);

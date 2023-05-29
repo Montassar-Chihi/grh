@@ -18,6 +18,10 @@ public interface EmployeeRepository extends JpaRepository<Employee, Integer> {
     List<Employee> findEmployeeByFirstNameOrLastName(@Param("first_name") String firstName,
                                                      @Param("last_name") String lastName);
 
+    @Query(value = "SELECT COUNT(*) FROM `user_info` WHERE is_in_days_off = 1 " ,
+            nativeQuery = true)
+    Integer findEmployeesInDaysOff();
+
     @Query(value = "SELECT * FROM `user_info` WHERE email != :email AND department_id = :department_id " ,
             nativeQuery = true)
     List<Employee> findSubs(@Param("email") String email , @Param("department_id") Department department);
@@ -29,6 +33,10 @@ public interface EmployeeRepository extends JpaRepository<Employee, Integer> {
     @Query(value = "SELECT * FROM `user_info` WHERE active = 1 AND department_id = :department_id AND user_info.user_roles_id != 3 ",
             nativeQuery = true)
     List<Employee> findAllForOneDepartment( @Param("department_id") Department department);
+
+    @Query(value = "SELECT * FROM `user_info` WHERE active = 1 AND department_id = :department_id ",
+            nativeQuery = true)
+    List<Employee> findAllEmployeesForOneDepartment( @Param("department_id") Department department);
 
     Employee findEmployeeByEmail(String email);
 }

@@ -73,7 +73,7 @@ public class MainView extends AppLayout {
         layout.setSpacing(false);
         layout.setAlignItems(FlexComponent.Alignment.CENTER);
         viewTitle = new H1();
-        layout.add(viewTitle);
+//        layout.add(viewTitle);
         Div avatar = new Div();
         avatar.setWidthFull();
         layout.add(avatar);
@@ -117,16 +117,16 @@ public class MainView extends AppLayout {
                 .map(GrantedAuthority::getAuthority).collect(Collectors.toSet());
 
         if(employee.getUserRoles().getRole().equalsIgnoreCase("Admin")){
-//            tabs.add(createTab("Dashboard", HomeView.class));
+            tabs.add(createTab("tableau de bord", HomeView.class));
             tabs.add(createTab("Profile", EmployeeProfileView.class));
-            tabs.add(createTab("Employées", EmployeesView.class));
+            tabs.add(createTab("Employés", EmployeesView.class));
             tabs.add(createTab("Utilisateurs" , UserView.class));
         }else if (employee.getUserRoles().getRole().equalsIgnoreCase("user")){
             tabs.add(createTab("Profile", EmployeeProfileView.class));
             tabs.add(createTab("Congés", RequestDaysOffView.class));
         }else{
             tabs.add(createTab("Profile", EmployeeProfileView.class));
-            tabs.add(createTab("Employées", EmployeesView.class));
+            tabs.add(createTab("Employés", EmployeesView.class));
             tabs.add(createTab("Congés", RequestDayOffManagementView.class));
         }
 
@@ -142,8 +142,11 @@ public class MainView extends AppLayout {
             case "Utilisateurs":
                 tab = new Tab(VaadinIcon.USER.create());
                 break;
-            case "Employées":
+            case "Employés":
                 tab = new Tab(VaadinIcon.WORKPLACE.create());
+                break;
+            case "tableau de bord":
+                tab = new Tab(VaadinIcon.DASHBOARD.create());
                 break;
             case "Home":
                 tab = new Tab(VaadinIcon.HOME.create());

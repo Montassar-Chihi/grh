@@ -80,60 +80,63 @@ public class RequestDaysOffView extends Div {
                 Notification.show("Zone Rouge ! Pas de congés pendant cette période").addThemeVariants(NotificationVariant.LUMO_ERROR);
             }else if(joursRestants == 0){
                 Notification.show("Solde de congé épuisé !").addThemeVariants(NotificationVariant.LUMO_ERROR);
-            } else if (employee.getSubstitute().getInDaysOff()){
-                Notification.show("Vous ne pouvez pas prendre un congé quand votre Sub est en congé !").addThemeVariants(NotificationVariant.LUMO_ERROR);
-            }else {
-                Dialog dialog = new Dialog();
-                dialog.setWidth("50%");
-                Button closeDialog = new Button(new Icon(VaadinIcon.CLOSE));
-                closeDialog.addClickListener(e -> {
-                    data = requestDayOffService.findRequestDayOffByEmployee(employee.getId());
-                    dialog.close();
-                });
-                closeDialog.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
-                closeDialog.getStyle().set("float", "right").set("color", "red");
-                dialog.add(closeDialog);
-                H1 title = new H1("Demander un jour de congé");
-                title.getStyle().set("margin", "10px auto");
-                dialog.add(title);
-                Div content = new Div();
-                DatePicker dateBegin = new DatePicker("Date");
-                dateBegin.setValue(event.getDate());
-                dateBegin.setWidth("80%");
-                dateBegin.getStyle().set("margin", "10px auto");
-                IntegerField duration = new IntegerField("Durée");
-                duration.setHasControls(true);
-                duration.getStyle().set("margin", "10px 10%");
-                duration.setMax((int) employee.getDaysOffLeft()+1);
-                ComboBox<String> reason = new ComboBox<>("Raison");
-                reason.setItems(" maladie ", " vacances ", " maternité ", "paternité");
-                reason.setWidth("80%");
-                reason.getStyle().set("margin", "10px auto");
-                VerticalLayout verticalLayout = new VerticalLayout(dateBegin, duration, reason);
-                Button send = new Button("Envoyer");
-                send.setWidthFull();
-                send.setIcon(new Icon(VaadinIcon.CHECK));
-                send.addClickListener(event1 -> {
-                    RequestDayOff requestDayOff = new RequestDayOff();
-                    requestDayOff.setDateBegin(Date.valueOf(dateBegin.getValue()));
-                    requestDayOff.setDuration(duration.getValue());
-                    requestDayOff.setEmployee(employee);
-                    requestDayOff.setDepartment(employee.getDepartment());
-                    requestDayOff.setReason(reason.getValue());
-                    requestDayOff.setStatus("En attente");
-                    requestDayOffService.update(requestDayOff);
-                    dialog.close();
-                    UI.getCurrent().getPage().reload();
-                });
-                Button cancel = new Button("Annuler");
-                cancel.setWidthFull();
-                cancel.setIcon(new Icon(VaadinIcon.CLOSE));
-                cancel.addClickListener(event1 -> dialog.close());
-                HorizontalLayout buttonLayout = new HorizontalLayout(send, cancel);
-                content.add(verticalLayout, buttonLayout);
-                dialog.add(content);
-                add(dialog);
-                dialog.open();
+            } else {
+                try {
+                    System.out.println(employee.getSubstitute().getInDaysOff());
+                    Notification.show("Vous ne pouvez pas prendre un congé quand votre Sub est en congé !").addThemeVariants(NotificationVariant.LUMO_ERROR);
+                } catch (Exception exception){
+                    Dialog dialog = new Dialog();
+                    dialog.setWidth("50%");
+                    Button closeDialog = new Button(new Icon(VaadinIcon.CLOSE));
+                    closeDialog.addClickListener(e -> {
+                        data = requestDayOffService.findRequestDayOffByEmployee(employee.getId());
+                        dialog.close();
+                    });
+                    closeDialog.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+                    closeDialog.getStyle().set("float", "right").set("color", "red");
+                    dialog.add(closeDialog);
+                    H1 title = new H1("Demander un jour de congé");
+                    title.getStyle().set("margin", "10px auto");
+                    dialog.add(title);
+                    Div content = new Div();
+                    DatePicker dateBegin = new DatePicker("Date");
+                    dateBegin.setValue(event.getDate());
+                    dateBegin.setWidth("80%");
+                    dateBegin.getStyle().set("margin", "10px auto");
+                    IntegerField duration = new IntegerField("Durée");
+                    duration.setHasControls(true);
+                    duration.getStyle().set("margin", "10px 10%");
+                    duration.setMax((int) employee.getDaysOffLeft() + 1);
+                    ComboBox<String> reason = new ComboBox<>("Raison");
+                    reason.setItems(" maladie ", " vacances ", " maternité ", "paternité");
+                    reason.setWidth("80%");
+                    reason.getStyle().set("margin", "10px auto");
+                    VerticalLayout verticalLayout = new VerticalLayout(dateBegin, duration, reason);
+                    Button send = new Button("Envoyer");
+                    send.setWidthFull();
+                    send.setIcon(new Icon(VaadinIcon.CHECK));
+                    send.addClickListener(event1 -> {
+                        RequestDayOff requestDayOff = new RequestDayOff();
+                        requestDayOff.setDateBegin(Date.valueOf(dateBegin.getValue()));
+                        requestDayOff.setDuration(duration.getValue());
+                        requestDayOff.setEmployee(employee);
+                        requestDayOff.setDepartment(employee.getDepartment());
+                        requestDayOff.setReason(reason.getValue());
+                        requestDayOff.setStatus("En attente");
+                        requestDayOffService.update(requestDayOff);
+                        dialog.close();
+                        UI.getCurrent().getPage().reload();
+                    });
+                    Button cancel = new Button("Annuler");
+                    cancel.setWidthFull();
+                    cancel.setIcon(new Icon(VaadinIcon.CLOSE));
+                    cancel.addClickListener(event1 -> dialog.close());
+                    HorizontalLayout buttonLayout = new HorizontalLayout(send, cancel);
+                    content.add(verticalLayout, buttonLayout);
+                    dialog.add(content);
+                    add(dialog);
+                    dialog.open();
+                }
             }
         });
         calendar.setColumnHeader(true);

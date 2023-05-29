@@ -10,9 +10,6 @@ public class Delays extends AbstractEntity {
 
     private Date date;
     private int duration;
-    @ManyToOne(fetch = FetchType.EAGER,cascade = CascadeType.MERGE)
-    @JoinColumn(name = "employee_id")
-    private Employee employee;
 
     public Delays() {
     }
@@ -33,11 +30,4 @@ public class Delays extends AbstractEntity {
         this.duration = duration;
     }
 
-    public Employee getEmployee() {
-        return employee;
-    }
-
-    public void setEmployee(Employee employee) {
-        this.employee = employee;
-    }
 }

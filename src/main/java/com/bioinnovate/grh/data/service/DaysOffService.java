@@ -24,7 +24,6 @@ public class DaysOffService extends CrudService<DaysOff, Integer> {
     public List findAll(){
         return  repository.findAll();
     }
-    public List<DaysOff> findDaysOffByEmployee(int id){return repository.findDaysOffByEmployeeId(id);}
 
     public void deleteDaysOff(int daysOffId){
         repository.deleteDaysOff(daysOffId);

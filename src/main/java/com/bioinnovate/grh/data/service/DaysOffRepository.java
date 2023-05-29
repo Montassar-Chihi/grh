@@ -11,8 +11,6 @@ import java.util.List;
 
 public interface DaysOffRepository extends JpaRepository<DaysOff, Integer> {
 
-    List<DaysOff> findDaysOffByEmployeeId(int id);
-
     @Modifying
     @Transactional
     @Query(value = "Delete From days_off WHERE id = :daysOff_id" ,

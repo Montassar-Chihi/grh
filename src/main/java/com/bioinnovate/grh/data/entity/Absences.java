@@ -9,11 +9,8 @@ import java.sql.Date;
 public class Absences extends AbstractEntity {
 
     private Date date;
-    private int duration;
+    private double duration;
     private Boolean justified;
-    @ManyToOne(fetch = FetchType.EAGER,cascade = CascadeType.MERGE)
-    @JoinColumn(name = "employee_id")
-    private Employee employee;
 
     public Absences() {
     }
@@ -34,19 +31,12 @@ public class Absences extends AbstractEntity {
         this.date = date;
     }
 
-    public int getDuration() {
+    public double getDuration() {
         return duration;
     }
 
-    public void setDuration(int duration) {
+    public void setDuration(double duration) {
         this.duration = duration;
     }
 
-    public Employee getEmployee() {
-        return employee;
-    }
-
-    public void setEmployee(Employee employee) {
-        this.employee = employee;
-    }
 }

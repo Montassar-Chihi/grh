@@ -12,17 +12,9 @@ import java.util.List;
 
 public interface DelaysRepository extends JpaRepository<Delays, Integer> {
 
-    @Query(value = "SELECT * From delays WHERE employee_id = :employee_id AND MONTH(delays.date) = MONTH(CURRENT_TIMESTAMP)" ,
+    @Query(value = "SELECT SUM(duration) FROM delays WHERE MONTH(delays.date) = MONTH(CURRENT_TIMESTAMP)" ,
             nativeQuery = true)
-    List<Delays> findDelaysByEmployeeId(@Param("employee_id") int employeeId);
-
-    @Query(value = "SELECT SUM(duration) From delays WHERE employee_id = :employee_id AND MONTH(delays.date) = MONTH(CURRENT_TIMESTAMP)" ,
-            nativeQuery = true)
-    Integer findTotalDelaysByEmployeeId(@Param("employee_id") int employeeId);
-
-    @Query(value = "SELECT SUM(duration) From delays WHERE employee_id = :employee_id AND MONTH(delays.date) = :month AND YEAR(delays.date) = YEAR(CURRENT_TIMESTAMP)" ,
-            nativeQuery = true)
-    Double findDelaysByEmployeeAndMonth(@Param("employee_id") int employeeId,@Param("month") int month);
+    Integer findTotalDelays();
 
     @Modifying
     @Transactional

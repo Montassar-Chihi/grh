@@ -9,9 +9,6 @@ import java.sql.Date;
 public class Overtime extends AbstractEntity {
     private Date date;
     private int duration;
-    @ManyToOne(fetch = FetchType.EAGER,cascade = CascadeType.MERGE)
-    @JoinColumn(name = "employee_id")
-    private Employee employee;
 
     public Overtime() {
     }
@@ -32,11 +29,4 @@ public class Overtime extends AbstractEntity {
         this.duration = duration;
     }
 
-    public Employee getEmployee() {
-        return employee;
-    }
-
-    public void setEmployee(Employee employee) {
-        this.employee = employee;
-    }
 }

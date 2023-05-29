@@ -26,15 +26,25 @@ public class Employee extends User {
     private Department department;
     private String picture;
     private Boolean gender;
-    @OneToMany(fetch = FetchType.LAZY,cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.LAZY)
     private List<Delays> delays;
-    @OneToMany(fetch = FetchType.LAZY,cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.LAZY)
+    private List<Overtime> overtime;
+    @OneToMany(fetch = FetchType.LAZY)
     private  List<Absences> absences;
-    @OneToMany(fetch = FetchType.LAZY,cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.LAZY)
     private List<DaysOff> daysOff;
     private String contract;
 
     public Employee() {
+    }
+
+    public List<Overtime> getOvertime() {
+        return overtime;
+    }
+
+    public void setOvertime(List<Overtime> overtime) {
+        this.overtime = overtime;
     }
 
     public Date getStartWorkDate() {

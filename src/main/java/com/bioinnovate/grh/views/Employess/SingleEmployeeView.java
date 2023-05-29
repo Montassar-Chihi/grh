@@ -15,12 +15,10 @@ import com.vaadin.flow.component.html.*;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.textfield.EmailField;
-import com.vaadin.flow.component.textfield.IntegerField;
-import com.vaadin.flow.component.textfield.TextArea;
-import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.component.textfield.*;
 import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
 import com.vaadin.flow.data.provider.ListDataProvider;
@@ -32,10 +30,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Date;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 @CssImport("./styles/views/main/main-view.css")
 public class SingleEmployeeView extends Div {
+
     private final HorizontalLayout horizontalLayoutForDelaysAndAbsences;
     private final HorizontalLayout horizontalLayoutForDaysOffAndOvertime;
     private  Span codeCnss;
@@ -109,7 +109,7 @@ public class SingleEmployeeView extends Div {
     private Button deleteDelays;
     private HorizontalLayout delaysButtonLayout;
     private DatePicker dateAbsence;
-    private IntegerField durationAbsence;
+    private NumberField durationAbsence;
     private Button saveAbsence;
     private Button cancelAbsence;
     private Button deleteAbsence;
@@ -135,8 +135,9 @@ public class SingleEmployeeView extends Div {
     private ComboBox<Employee> substituteField;
     private Button openCv;
     private Checkbox justified;
+    private HorizontalLayout personalInfoMainLayout;
 
-    public SingleEmployeeView(@Autowired Employee employee, @Autowired EmployeeService employeeService, @Autowired AbsenceService absenceService,
+    public SingleEmployeeView(Employee employee, @Autowired EmployeeService employeeService, @Autowired AbsenceService absenceService,
                               @Autowired DelaysService delaysService, @Autowired DaysOffService daysOffService,
                               @Autowired DepartmentService departmentService, @Autowired OvertimeService overtimeService,
                               @Autowired RequestDayOffService requestDayOffService){
@@ -152,17 +153,17 @@ public class SingleEmployeeView extends Div {
         horizontalLayoutForDelaysAndAbsences = new HorizontalLayout();
         horizontalLayoutForDelaysAndAbsences.setWidthFull();
         add(horizontalLayoutForDelaysAndAbsences);
-        fillAbsencesDiv(employee,absenceService);
-        fillDelaysDiv(employee,delaysService);
+        fillAbsencesDiv(employee,absenceService, employeeService);
+        fillDelaysDiv(employee,delaysService, employeeService);
         horizontalLayoutForDaysOffAndOvertime = new HorizontalLayout();
         horizontalLayoutForDaysOffAndOvertime.setWidthFull();
         add(horizontalLayoutForDaysOffAndOvertime);
-        fillDaysOffDiv(employee,daysOffService);
-        fillOvertimeDiv(employee,overtimeService);
+        fillDaysOffDiv(employee,daysOffService, employeeService);
+        fillOvertimeDiv(employee,overtimeService, employeeService);
 
     }
 
-    private void fillOvertimeDiv(Employee employee, OvertimeService overtimeService){
+    private void fillOvertimeDiv(Employee employee, OvertimeService overtimeService,EmployeeService employeeService){
         overtime = new Div();
         titleContainerOvertime = new Div();
         titleOvertime = new H3("Heures supplémentaires");
@@ -171,16 +172,18 @@ public class SingleEmployeeView extends Div {
         addOvertime.getStyle().set("color","white").set("margin-left","15px");
         Overtime newOvertime = new Overtime();
         addOvertime.addClickListener(event -> {
-            createEditOvertime(newOvertime,overtimeService);
+            createEditOvertime(newOvertime,overtimeService, employeeService);
             titleContainerOvertime.remove(addOvertime);
         });
         titleContainerOvertime.add(addOvertime);
         overtimeGrid = new Grid<>(Overtime.class);
         overtimeGrid.setColumns("date");
-        try {
-            totalSecondsOvertime = overtimeService.findTotalOvertimeByEmployee(employee.getId());
-        }catch (Exception e){
-            totalSeconds = 0;
+        totalSecondsOvertime = 0;
+        List<Overtime> overtimes = employee.getOvertime();
+        for (Overtime overtime : overtimes){
+            if(overtime.getDate().getMonth() == LocalDate.now().getMonthValue()-1){
+                totalSecondsOvertime += overtime.getDuration();
+            }
         }
         overtimeGrid.addColumn(new ComponentRenderer<>(item -> {
             int s = item.getDuration();
@@ -189,12 +192,12 @@ public class SingleEmployeeView extends Div {
             int hours = (s/60)/60;
             return new Text(hours+"h : "+min+"min : "+sec+"sec");
         })).setHeader("Durée").setKey("duration");
-        overtimeDataProvider = new ListDataProvider<>(overtimeService.findOvertimeByEmployee(employee.getId()));
+        overtimeDataProvider = new ListDataProvider<>(employee.getOvertime());
         overtimeGrid.setDataProvider(overtimeDataProvider);
         overtimeGrid.asSingleSelect().addValueChangeListener(event -> {
             Optional<Overtime> overtime = overtimeService.get(event.getValue().getId());
             if (overtime.isPresent()){
-                createEditOvertime(overtime.get(),overtimeService);
+                createEditOvertime(overtime.get(),overtimeService, employeeService);
             } else {
                 overtimeGrid.getDataProvider().refreshAll();
             }
@@ -204,7 +207,7 @@ public class SingleEmployeeView extends Div {
         total = new TextField("Heures supplémentaires totales");
         total.setReadOnly(true);
         total.setValue((totalSecondsOvertime/60)/60+"h : "+(totalSecondsOvertime/60)%60+"min : "+totalSecondsOvertime%60+"sec");
-        total.setWidth("90%");
+        total.setWidth("100%");
         total.getStyle().set("margin","0 auto");
         totalContainerOvertime = new VerticalLayout(overtime,total);
         totalContainerOvertime.setWidth("50%");
@@ -212,7 +215,7 @@ public class SingleEmployeeView extends Div {
         add(endStylingDiv);
     }
 
-    private void fillDaysOffDiv(Employee employee,DaysOffService daysOffService){
+    private void fillDaysOffDiv(Employee employee,DaysOffService daysOffService,EmployeeService employeeService){
         daysOff = new Div();
         titleContainerDaysOff = new Div();
         titleDaysOff = new H3("Congés");
@@ -221,7 +224,7 @@ public class SingleEmployeeView extends Div {
         addDaysOff.getStyle().set("color","white").set("margin-left","15px");
         DaysOff newDaysOff = new DaysOff();
         addDaysOff.addClickListener(event -> {
-            createEditDaysOff(newDaysOff,daysOffService);
+            createEditDaysOff(newDaysOff,daysOffService, employeeService);
             titleContainerDaysOff.remove(addDaysOff);
         });
         titleContainerDaysOff.add(addDaysOff);
@@ -229,12 +232,12 @@ public class SingleEmployeeView extends Div {
         daysOffGrid.addColumn("dateBegin").setHeader("Date de début");
         daysOffGrid.addColumn("dateEnd").setHeader("Date de fin");
         daysOffGrid.addColumn("reason").setHeader("Raison");
-        daysOffDataProvider = new ListDataProvider<>(daysOffService.findDaysOffByEmployee(employee.getId()));
+        daysOffDataProvider = new ListDataProvider<>(employee.getDaysOff());
         daysOffGrid.setDataProvider(daysOffDataProvider);
         daysOffGrid.asSingleSelect().addValueChangeListener(event -> {
             Optional<DaysOff> daysOff = daysOffService.get(event.getValue().getId());
             if (daysOff.isPresent()){
-                createEditDaysOff(daysOff.get(),daysOffService);
+                createEditDaysOff(daysOff.get(),daysOffService, employeeService);
             } else {
                 daysOffGrid.getDataProvider().refreshAll();
             }
@@ -245,7 +248,7 @@ public class SingleEmployeeView extends Div {
         totalContainerDaysOff.setWidth("50%");
         horizontalLayoutForDaysOffAndOvertime.add(totalContainerDaysOff);    }
 
-    private void fillDelaysDiv(Employee employee,DelaysService delaysService){
+    private void fillDelaysDiv(Employee employee,DelaysService delaysService,EmployeeService employeeService){
         delays = new Div();
         titleContainerDelays = new Div();
         titleDelays = new H3("Retards");
@@ -254,16 +257,18 @@ public class SingleEmployeeView extends Div {
         addDelays.getStyle().set("color","white").set("margin-left","15px");
         Delays newDelays = new Delays();
         addDelays.addClickListener(event -> {
-            createEditDelays(newDelays,delaysService);
+            createEditDelays(newDelays,delaysService, employeeService);
             titleContainerDelays.remove(addDelays);
         });
         titleContainerDelays.add(addDelays);
         delaysGrid = new Grid<>(Delays.class);
         delaysGrid.setColumns("date");
-        try{
-            totalSeconds = delaysService.findTotalDelaysByEmployeeId(employee.getId());
-        }catch (Exception e){
-            totalSeconds = 0;
+        totalSeconds = 0;
+        List<Delays> delaysList = employee.getDelays();
+        for (Delays delay:delaysList){
+            if(delay.getDate().getMonth() == LocalDate.now().getMonthValue()-1){
+                totalSeconds += delay.getDuration();
+            }
         }
         delaysGrid.addColumn(new ComponentRenderer<>(item -> {
             int s = item.getDuration();
@@ -272,12 +277,12 @@ public class SingleEmployeeView extends Div {
             int hours = (s/60)/60;
             return new Text(hours+"h : "+min+"min : "+sec+"sec");
         })).setHeader("Durée").setKey("duration");
-        delaysDataProvider = new ListDataProvider<>(delaysService.findDelaysByEmployee(employee.getId()));
+        delaysDataProvider = new ListDataProvider<>(employee.getDelays());
         delaysGrid.setDataProvider(delaysDataProvider);
         delaysGrid.asSingleSelect().addValueChangeListener(event -> {
             Optional<Delays> delays = delaysService.get(event.getValue().getId());
             if (delays.isPresent()){
-                createEditDelays(delays.get(),delaysService);
+                createEditDelays(delays.get(),delaysService, employeeService);
             } else {
                 delaysGrid.getDataProvider().refreshAll();
             }
@@ -287,14 +292,14 @@ public class SingleEmployeeView extends Div {
         totalDelays = new TextField("Retard totale");
         totalDelays.setValue((totalSeconds/60)/60+"h : "+(totalSeconds/60)%60+"min : "+totalSeconds%60+"sec");
         totalDelays.setReadOnly(true);
-        totalDelays.setWidth("90%");
+        totalDelays.setWidth("100%");
         totalDelays.getStyle().set("margin","0 auto");
         totalContainerDelays = new VerticalLayout(delays,totalDelays);
         totalContainerDelays.setWidth("50%");
         horizontalLayoutForDelaysAndAbsences.add(totalContainerDelays);
     }
 
-    private void fillAbsencesDiv(Employee employee,AbsenceService absenceService){
+    private void fillAbsencesDiv(Employee employee,AbsenceService absenceService,EmployeeService employeeService){
         absences = new Div();
         titleContainerAbsences = new Div();
         titleAbsences = new H3("Absences");
@@ -303,7 +308,7 @@ public class SingleEmployeeView extends Div {
         addAbsences.getStyle().set("color","white").set("margin-left","15px");
         Absences newAbsence = new Absences();
         addAbsences.addClickListener(event -> {
-            createEditAbsence(newAbsence,absenceService);
+            createEditAbsence(newAbsence,absenceService, employeeService);
             titleContainerAbsences.remove(addAbsences);
         });
         titleContainerAbsences.add(addAbsences);
@@ -311,12 +316,12 @@ public class SingleEmployeeView extends Div {
         absenceGrid.setColumns("date","duration","justified");
         absenceGrid.getColumnByKey("duration").setHeader("Durée");
         absenceGrid.getColumnByKey("justified").setHeader("Justifiée");
-        dataProvider = new ListDataProvider<>(absenceService.findAbsencesByEmployee(employee.getId()));
+        dataProvider = new ListDataProvider<>(employee.getAbsences());
         absenceGrid.setDataProvider(dataProvider);
         absenceGrid.asSingleSelect().addValueChangeListener(event -> {
             Optional<Absences> absences = absenceService.get(event.getValue().getId());
             if (absences.isPresent()){
-                createEditAbsence(absences.get(),absenceService);
+                createEditAbsence(absences.get(),absenceService, employeeService);
             } else {
                 absenceGrid.getDataProvider().refreshAll();
             }
@@ -369,7 +374,11 @@ public class SingleEmployeeView extends Div {
         openCv.addClickListener(event -> new OpenPdf(newEmployee.getContractPapers(), "contracts"));
         personalInformation.add(titleContainerPersonalInfo,codeCnss,cin,phone,email,salary,daysOffAvailable,daysOffLeft,position,department,substitute,contract,edit,openCv);
         stylePersonalInfoSpans();
-        add(picture,fullName,personalInformation);
+        VerticalLayout pictureNameLayout = new VerticalLayout(picture,fullName);
+        pictureNameLayout.getStyle().set("width","30%").set("flex-flow","column-reverse");
+        personalInfoMainLayout = new HorizontalLayout(pictureNameLayout, personalInformation);
+        personalInfoMainLayout.setWidthFull();
+        add(personalInfoMainLayout);
     }
 
     private void styleAbsenceFields(){
@@ -394,14 +403,14 @@ public class SingleEmployeeView extends Div {
         justified.setValue(absence.getJustified());
     }
 
-    private void createEditAbsence(Absences absenceDetails, AbsenceService absenceService){
+    private void createEditAbsence(Absences absenceDetails, AbsenceService absenceService,EmployeeService employeeService){
 
 //        Remove spans to replace them with fields
         horizontalLayoutForDelaysAndAbsences.remove(totalContainerAbsences,totalContainerDelays);
         absences.remove(titleContainerAbsences,absenceGrid);
 
         dateAbsence = new DatePicker("Date");
-        durationAbsence = new IntegerField("Durée");
+        durationAbsence = new NumberField("Durée");
         justified = new Checkbox("Justifiée");
         saveAbsence = new Button("Sauvgarder");
         cancelAbsence = new Button("Annuler");
@@ -425,24 +434,28 @@ public class SingleEmployeeView extends Div {
 //        Manage the buttons
         saveAbsence.addClickListener(event -> {
 //            Save the update
-            saveAbsence(absenceDetails,absenceService);
+            saveAbsence(absenceDetails,absenceService, employeeService);
 //            remove fields from main div to replace it with the grid
             horizontalLayoutForDelaysAndAbsences.remove(totalContainerAbsences,totalContainerDelays);
             absences.remove(titleContainerAbsences,dateAbsence,durationAbsence,justified,absenceButtonLayout);
 //            Fill the days off grid
-            fillAbsencesDiv(theEmployee,absenceService);
+            fillAbsencesDiv(theEmployee,absenceService, employeeService);
 //            Add the layouts again after updating
             horizontalLayoutForDelaysAndAbsences.add(totalContainerAbsences,totalContainerDelays);
         });
 
         deleteAbsence.addClickListener(event -> {
 //            Save the update
+            List<Absences> absencesList = theEmployee.getAbsences();
+            absencesList.remove(absenceDetails);
+            theEmployee.setAbsences(absencesList);
+            employeeService.update(theEmployee);
             absenceService.deleteAbsence(absenceDetails.getId());
 //            remove fields from main div to replace it with the grid
             horizontalLayoutForDelaysAndAbsences.remove(totalContainerAbsences,totalContainerDelays);
             absences.remove(titleContainerAbsences,dateAbsence,durationAbsence,justified,absenceButtonLayout);
 //            Fill the days off grid
-            fillAbsencesDiv(theEmployee,absenceService);
+            fillAbsencesDiv(theEmployee,absenceService, employeeService);
 //            Add the layouts again after updating
             horizontalLayoutForDelaysAndAbsences.add(totalContainerAbsences,totalContainerDelays);
         });
@@ -452,18 +465,24 @@ public class SingleEmployeeView extends Div {
             horizontalLayoutForDelaysAndAbsences.remove(totalContainerAbsences,totalContainerDelays);
             absences.remove(titleContainerAbsences,dateAbsence,durationAbsence,justified,absenceButtonLayout);
 //            Fill the days off grid
-            fillAbsencesDiv(theEmployee,absenceService);
+            fillAbsencesDiv(theEmployee,absenceService, employeeService);
 //            Add the layouts again after updating
             horizontalLayoutForDelaysAndAbsences.add(totalContainerAbsences,totalContainerDelays);
         });
     }
 
-    private void saveAbsence(Absences absenceDetails, AbsenceService absenceService) {
+    private void saveAbsence(Absences absenceDetails, AbsenceService absenceService,EmployeeService employeeService) {
         absenceDetails.setDate(Date.valueOf(dateAbsence.getValue()));
         absenceDetails.setDuration(durationAbsence.getValue());
         absenceDetails.setJustified(justified.getValue());
-        absenceDetails.setEmployee(theEmployee);
+//        absenceDetails.setEmployee(theEmployee);
         absenceService.update(absenceDetails);
+        try{
+            List<Absences> absences = theEmployee.getAbsences();
+            absences.add(absenceDetails);
+            theEmployee.setAbsences(absences);
+            employeeService.update(theEmployee);
+        }catch (Exception ignored){}
     }
 
     private void styleDelaysFields(){
@@ -490,7 +509,7 @@ public class SingleEmployeeView extends Div {
         durationDelaysSec.setValue(delays.getDuration() % 60);
     }
 
-    private void createEditDelays(Delays delaysDetails, DelaysService delaysService){
+    private void createEditDelays(Delays delaysDetails, DelaysService delaysService,EmployeeService employeeService){
 
 //        Remove spans to replace them with fields
         horizontalLayoutForDelaysAndAbsences.remove(totalContainerAbsences,totalContainerDelays);
@@ -539,36 +558,43 @@ public class SingleEmployeeView extends Div {
 //        Manage the buttons
         saveDelays.addClickListener(event -> {
 //            Save the update
-            saveDelays(delaysDetails,delaysService);
-            try {
-                totalSeconds = delaysService.findTotalDelaysByEmployeeId(theEmployee.getId());
-            }catch (Exception e){
-                totalSeconds = 0;
+            saveDelays(delaysDetails,delaysService,employeeService);
+            totalSeconds = 0;
+            List<Delays> delaysList = theEmployee.getDelays();
+            for (Delays delay:delaysList){
+                if(delay.getDate().getMonth() == LocalDate.now().getMonthValue()-1){
+                    totalSeconds += delay.getDuration();
+                }
             }
             totalDelays.setValue((totalSeconds/60)/60+"h : "+(totalSeconds/60)%60+"min : "+totalSeconds%60+"sec");
 //            remove fields from main div to replace it with the grid
             horizontalLayoutForDelaysAndAbsences.remove(totalContainerAbsences,totalContainerDelays);
             delays.remove(titleContainerDelays,dateDelays,durationDelaysHours,durationDelaysMin,durationDelaysSec,delaysButtonLayout);
 //            Fill the days off grid
-            fillDelaysDiv(theEmployee,delaysService);
+            fillDelaysDiv(theEmployee,delaysService, employeeService);
 //            Add the layouts again after updating
             horizontalLayoutForDelaysAndAbsences.add(totalContainerAbsences,totalContainerDelays);
         });
 
         deleteDelays.addClickListener(event -> {
 //            Save the update
+            List<Delays> delaysList = theEmployee.getDelays();
+            delaysList.remove(delaysDetails);
+            theEmployee.setDelays(delaysList);
+            employeeService.update(theEmployee);
             delaysService.deleteDelays(delaysDetails.getId());
-            try {
-                totalSeconds = delaysService.findTotalDelaysByEmployeeId(theEmployee.getId());
-            }catch (Exception e){
-                totalSeconds = 0;
+            totalSeconds = 0;
+            for (Delays delay:delaysList){
+                if(delay.getDate().getMonth() == LocalDate.now().getMonthValue()-1){
+                    totalSeconds += delay.getDuration();
+                }
             }
             totalDelays.setValue((totalSeconds/60)/60+"h : "+(totalSeconds/60)%60+"min : "+totalSeconds%60+"sec");
 //            remove fields from main div to replace it with the grid
             horizontalLayoutForDelaysAndAbsences.remove(totalContainerAbsences,totalContainerDelays);
             delays.remove(titleContainerDelays,dateDelays,durationDelaysHours,durationDelaysMin,durationDelaysSec,delaysButtonLayout);
 //            Fill the days off grid
-            fillDelaysDiv(theEmployee,delaysService);
+            fillDelaysDiv(theEmployee,delaysService, employeeService);
 //            Add the layouts again after updating
             horizontalLayoutForDelaysAndAbsences.add(totalContainerAbsences,totalContainerDelays);
         });
@@ -578,17 +604,23 @@ public class SingleEmployeeView extends Div {
             horizontalLayoutForDelaysAndAbsences.remove(totalContainerAbsences,totalContainerDelays);
             delays.remove(titleContainerDelays,dateDelays,durationDelaysHours,durationDelaysMin,durationDelaysSec,delaysButtonLayout);
 //            Fill the days off grid
-            fillDelaysDiv(theEmployee,delaysService);
+            fillDelaysDiv(theEmployee,delaysService, employeeService);
 //            Add the layouts again after updating
             horizontalLayoutForDelaysAndAbsences.add(totalContainerAbsences,totalContainerDelays);
         });
     }
 
-    private void saveDelays(Delays delaysDetails, DelaysService delaysService) {
+    private void saveDelays(Delays delaysDetails, DelaysService delaysService,EmployeeService employeeService) {
         delaysDetails.setDate(Date.valueOf(dateDelays.getValue()));
         delaysDetails.setDuration(durationDelaysHours.getValue()*3600+durationDelaysMin.getValue()*60+durationDelaysSec.getValue());
-        delaysDetails.setEmployee(theEmployee);
+//        delaysDetails.setEmployee(theEmployee);
         delaysService.update(delaysDetails);
+        try{
+            List<Delays> delays = theEmployee.getDelays();
+            delays.add(delaysDetails);
+            theEmployee.setDelays(delays);
+            employeeService.update(theEmployee);
+        }catch (Exception ignored){}
     }
 
     private void styleOvertimeFields(){
@@ -615,7 +647,7 @@ public class SingleEmployeeView extends Div {
         durationOvertimeSec.setValue(overtime.getDuration() % 60);
     }
 
-    private void createEditOvertime(Overtime overtimeDetails, OvertimeService overtimeService){
+    private void createEditOvertime(Overtime overtimeDetails, OvertimeService overtimeService,EmployeeService employeeService){
 
 //        Remove spans to replace them with fields
         horizontalLayoutForDaysOffAndOvertime.remove(totalContainerDaysOff,totalContainerOvertime);
@@ -661,36 +693,43 @@ public class SingleEmployeeView extends Div {
 //        Manage the buttons
         saveOvertime.addClickListener(event -> {
 //            Save the update
-            saveOvertime(overtimeDetails,overtimeService);
-            try {
-                totalSecondsOvertime = overtimeService.findTotalOvertimeByEmployee(theEmployee.getId());
-            }catch (Exception e){
-                totalSecondsOvertime = 0;
+            saveOvertime(overtimeDetails,overtimeService, employeeService);
+            totalSecondsOvertime = 0;
+            List<Overtime> overtimes = theEmployee.getOvertime();
+            for (Overtime overtime : overtimes){
+                if(overtime.getDate().getMonth() == LocalDate.now().getMonthValue()-1){
+                    totalSecondsOvertime += overtime.getDuration();
+                }
             }
             total.setValue((totalSecondsOvertime/60)/60+"h : "+(totalSecondsOvertime/60)%60+"min : "+totalSecondsOvertime%60+"sec");
 //            remove fields from main div to replace it with the grid
             horizontalLayoutForDaysOffAndOvertime.remove(totalContainerDaysOff,totalContainerOvertime);
             overtime.remove(titleContainerOvertime,dateOvertime,durationOvertimeHours,durationOvertimeMin,durationOvertimeSec,overtimeButtonLayout);
 //            Fill the days off grid
-            fillOvertimeDiv(theEmployee,overtimeService);
+            fillOvertimeDiv(theEmployee,overtimeService, employeeService);
 //            Add the layouts again after updating
             horizontalLayoutForDaysOffAndOvertime.add(totalContainerDaysOff,totalContainerOvertime);
         });
 
         deleteOvertime.addClickListener(event -> {
 //            Save the update
+            List<Overtime> overtimes = theEmployee.getOvertime();
+            overtimes.remove(overtimeDetails);
+            theEmployee.setOvertime(overtimes);
+            employeeService.update(theEmployee);
             overtimeService.deleteOvertime(overtimeDetails.getId());
-            try {
-                totalSecondsOvertime = overtimeService.findTotalOvertimeByEmployee(theEmployee.getId());
-            }catch (Exception e){
-                totalSecondsOvertime = 0;
+            totalSecondsOvertime = 0;
+            for (Overtime overtime : overtimes){
+                if(overtime.getDate().getMonth() == LocalDate.now().getMonthValue()-1){
+                    totalSecondsOvertime += overtime.getDuration();
+                }
             }
             total.setValue((totalSecondsOvertime/60)/60+"h : "+(totalSecondsOvertime/60)%60+"min : "+totalSecondsOvertime%60+"sec");
 //          remove fields from main div to replace it with the grid
             horizontalLayoutForDaysOffAndOvertime.remove(totalContainerDaysOff,totalContainerOvertime);
             overtime.remove(titleContainerOvertime,dateOvertime,durationOvertimeHours,durationOvertimeMin,durationOvertimeSec,overtimeButtonLayout);
 //            Fill the days off grid
-            fillOvertimeDiv(theEmployee,overtimeService);
+            fillOvertimeDiv(theEmployee,overtimeService, employeeService);
 //            Add the layouts again after updating
             horizontalLayoutForDaysOffAndOvertime.add(totalContainerDaysOff,totalContainerOvertime);
         });
@@ -700,17 +739,23 @@ public class SingleEmployeeView extends Div {
             horizontalLayoutForDaysOffAndOvertime.remove(totalContainerDaysOff,totalContainerOvertime);
             overtime.remove(titleContainerOvertime,dateOvertime,durationOvertimeHours,durationOvertimeMin,durationOvertimeSec,overtimeButtonLayout);
 //            Fill the days off grid
-            fillOvertimeDiv(theEmployee,overtimeService);
+            fillOvertimeDiv(theEmployee,overtimeService, employeeService);
 //            Add the layouts again after updating
             horizontalLayoutForDaysOffAndOvertime.add(totalContainerDaysOff,totalContainerOvertime);
         });
     }
 
-    private void saveOvertime(Overtime overtimeDetails, OvertimeService overtimeService) {
+    private void saveOvertime(Overtime overtimeDetails, OvertimeService overtimeService,EmployeeService employeeService) {
         overtimeDetails.setDate(Date.valueOf(dateOvertime.getValue()));
         overtimeDetails.setDuration(durationOvertimeHours.getValue()*3600+durationOvertimeMin.getValue()*60+durationOvertimeSec.getValue());
-        overtimeDetails.setEmployee(theEmployee);
+//        overtimeDetails.setEmployee(theEmployee);
         overtimeService.update(overtimeDetails);
+        try {
+            List<Overtime> overtimes = theEmployee.getOvertime();
+            overtimes.add(overtimeDetails);
+            theEmployee.setOvertime(overtimes);
+            employeeService.update(theEmployee);
+        }catch (Exception ignored){}
     }
 
     private void styleDaysOffFields(){
@@ -735,7 +780,7 @@ public class SingleEmployeeView extends Div {
         reason.setValue(daysOff.getReason());
     }
 
-    private void createEditDaysOff(DaysOff daysOffDetails, DaysOffService daysOffService){
+    private void createEditDaysOff(DaysOff daysOffDetails, DaysOffService daysOffService,EmployeeService employeeService){
 
 //        Remove spans to replace them with fields
         horizontalLayoutForDaysOffAndOvertime.remove(totalContainerDaysOff,totalContainerOvertime);
@@ -769,12 +814,12 @@ public class SingleEmployeeView extends Div {
 //        Manage the buttons
         saveDaysOff.addClickListener(event -> {
 //            Save the update
-            saveDaysOff(daysOffDetails,daysOffService);
+            saveDaysOff(daysOffDetails,daysOffService, employeeService);
 //            remove fields from main div to replace it with the grid
             horizontalLayoutForDaysOffAndOvertime.remove(totalContainerDaysOff,totalContainerOvertime);
             daysOff.remove(titleContainerDaysOff,beginAt,endAt,reason,daysOffButtonLayout);
 //            Fill the days off grid
-            fillDaysOffDiv(theEmployee,daysOffService);
+            fillDaysOffDiv(theEmployee,daysOffService, employeeService);
 //            Add the layouts again after updating
             horizontalLayoutForDaysOffAndOvertime.add(totalContainerDaysOff,totalContainerOvertime);
         });
@@ -786,7 +831,7 @@ public class SingleEmployeeView extends Div {
             horizontalLayoutForDaysOffAndOvertime.remove(totalContainerDaysOff,totalContainerOvertime);
             daysOff.remove(titleContainerDaysOff,beginAt,endAt,reason,daysOffButtonLayout);
 //            Fill the days off grid
-            fillDaysOffDiv(theEmployee,daysOffService);
+            fillDaysOffDiv(theEmployee,daysOffService, employeeService);
 //            Add the layouts again after updating
             horizontalLayoutForDaysOffAndOvertime.add(totalContainerDaysOff,totalContainerOvertime);
         });
@@ -796,38 +841,56 @@ public class SingleEmployeeView extends Div {
             horizontalLayoutForDaysOffAndOvertime.remove(totalContainerDaysOff,totalContainerOvertime);
             daysOff.remove(titleContainerDaysOff,beginAt,endAt,reason,daysOffButtonLayout);
 //            Fill the days off grid
-            fillDaysOffDiv(theEmployee,daysOffService);
+            fillDaysOffDiv(theEmployee,daysOffService, employeeService);
 //            Add the layouts again after updating
             horizontalLayoutForDaysOffAndOvertime.add(totalContainerDaysOff,totalContainerOvertime);
         });
     }
 
-    private void saveDaysOff(DaysOff daysOffDetails, DaysOffService daysOffService) {
+    private void saveDaysOff(DaysOff daysOffDetails, DaysOffService daysOffService,EmployeeService employeeService) {
         daysOffDetails.setDateBegin(Date.valueOf(beginAt.getValue()));
         daysOffDetails.setDateBegin(Date.valueOf(endAt.getValue()));
         daysOffDetails.setReason(reason.getValue());
-        daysOffDetails.setEmployee(theEmployee);
+//        daysOffDetails.setEmployee(theEmployee);
         daysOffService.update(daysOffDetails);
+        try{
+            List<DaysOff> daysOffs = theEmployee.getDaysOff();
+            daysOffs.add(daysOffDetails);
+            theEmployee.setDaysOff(daysOffs);
+            employeeService.update(theEmployee);
+        }catch (Exception ignored){}
     }
 
     private void createEditPersonalInfo(Employee employee, EmployeeService employeeService,DepartmentService departmentService,RequestDayOffService requestDayOffService){
 
 //        Remove spans to replace them with fields
-        remove(picture,fullName,personalInformation,horizontalLayoutForDelaysAndAbsences,horizontalLayoutForDaysOffAndOvertime,endStylingDiv);
-        personalInformation.remove(titleContainerPersonalInfo,codeCnss,cin,phone,email,salary,daysOffAvailable,daysOffLeft,position,department,substitute,contract,edit,openCv);
+        remove(personalInfoMainLayout,horizontalLayoutForDelaysAndAbsences,horizontalLayoutForDaysOffAndOvertime,endStylingDiv);
+        personalInformation.remove(titleContainerPersonalInfo,codeCnss,cin,phone,email,salary,contract,daysOffAvailable,daysOffLeft,position,department,edit,openCv);
 
 //        Create fields
         personalInformation = new Div();
-        titleContainerPersonalInfo = new Div();
         titlePersonalInfo = new H3("Renseignements personnels");
+        titleContainerPersonalInfo = new Div(titlePersonalInfo);
         pictureMemoryBuffer = new MemoryBuffer();
         pictureMemoryUpload = new Upload(pictureMemoryBuffer);
         uploadButton = new Button("Importer L'image");
         firstNameField = new TextField("Prénom");
         lastNameField = new TextField("Nom de la famille");
         codeCnssField = new TextField("Code Cnss");
+        codeCnssField.setPattern("\\d*");
+        codeCnssField.setMaxLength(10);
+        codeCnssField.setMinLength(10);
+        codeCnssField.setErrorMessage("code CNSS doit avoir 10 chiffres");
         cinField = new TextField("Cin");
+        cinField.setPattern("\\d*");
+        cinField.setMaxLength(8);
+        cinField.setMinLength(8);
+        cinField.setErrorMessage("CIN doit avoir 8 chiffres");
         phoneField = new TextField("Téléphone");
+        phoneField.setPattern("\\d*");
+        phoneField.setMaxLength(8);
+        phoneField.setMinLength(8);
+        phoneField.setErrorMessage("Téléphone doit avoir 8 chiffres");
         emailField = new EmailField("Email");
         salaryField = new TextField("Salaire");
         dinarPrefix = new Div();
@@ -852,11 +915,14 @@ public class SingleEmployeeView extends Div {
 //        Fill the fields with the employee data
         fillFields(employee);
 //        Add the components to their respective layouts
-        titleContainerPersonalInfo.add(titlePersonalInfo);
         personalInformation.add(titleContainerPersonalInfo, pictureMemoryUpload, firstNameField, lastNameField, codeCnssField, cinField,
                 phoneField, emailField, salaryField, positionField, substituteField,personalInformationButtonLayout);
-        add(picture,fullName,personalInformation,horizontalLayoutForDelaysAndAbsences,horizontalLayoutForDaysOffAndOvertime,endStylingDiv);
-        //        Style the fields
+        VerticalLayout pictureNameLayout = new VerticalLayout(fullName, pictureMemoryUpload);
+        pictureNameLayout.getStyle().set("width","30%").set("flex-flow","column-reverse").set("align-self","center");
+        personalInfoMainLayout = new HorizontalLayout(pictureNameLayout, personalInformation);
+        personalInfoMainLayout.setWidthFull();
+        add(personalInfoMainLayout,horizontalLayoutForDelaysAndAbsences,horizontalLayoutForDaysOffAndOvertime,endStylingDiv);
+//        Style the fields
         styleFields();
 
 //        Manage the buttons
@@ -864,8 +930,8 @@ public class SingleEmployeeView extends Div {
 //            Save the update
             save(employee,employeeService);
 //            remove fields from main div to replace it with the spans
-            remove(picture,fullName,personalInformation,horizontalLayoutForDelaysAndAbsences,horizontalLayoutForDaysOffAndOvertime,endStylingDiv);
-            personalInformation.remove(titleContainerPersonalInfo, pictureMemoryUpload, firstNameField, lastNameField, codeCnssField, cinField,
+            remove(personalInfoMainLayout,horizontalLayoutForDelaysAndAbsences,horizontalLayoutForDaysOffAndOvertime,endStylingDiv);
+            personalInformation.remove(titleContainerPersonalInfo, firstNameField, lastNameField, codeCnssField, cinField,
                     phoneField, emailField, salaryField, positionField, substituteField,personalInformationButtonLayout);
 //            Fill the personal info spans
             fillPersonalInformationSpans(employee,employeeService,departmentService,requestDayOffService);
@@ -874,8 +940,8 @@ public class SingleEmployeeView extends Div {
 
         cancel.addClickListener(event -> {
 //            remove fields from main div to replace it with the spans
-            remove(picture,fullName,personalInformation,horizontalLayoutForDelaysAndAbsences,horizontalLayoutForDaysOffAndOvertime,endStylingDiv);
-            personalInformation.remove(titleContainerPersonalInfo, pictureMemoryUpload, firstNameField, lastNameField, codeCnssField, cinField,
+            remove(personalInfoMainLayout,horizontalLayoutForDelaysAndAbsences,horizontalLayoutForDaysOffAndOvertime,endStylingDiv);
+            personalInformation.remove(titleContainerPersonalInfo, firstNameField, lastNameField, codeCnssField, cinField,
                     phoneField, emailField, salaryField, positionField, substituteField,personalInformationButtonLayout);
 //            Fill the personal info spans
             fillPersonalInformationSpans(employee,employeeService,departmentService,requestDayOffService);
@@ -910,14 +976,14 @@ public class SingleEmployeeView extends Div {
             }
         }
         employeeService.update(employee);
-
+        Notification.show("Employé(e) Modifie(é)").addThemeVariants(NotificationVariant.LUMO_SUCCESS);
     }
 
     private void fillFields(Employee employee){
         firstNameField.setValue(employee.getFirstName());
         lastNameField.setValue(employee.getLastName());
         codeCnssField.setValue(String.valueOf(employee.getCodeCnss()));
-        cinField.setValue(String.valueOf(employee.getCin()));
+        cinField.setValue("0"+ employee.getCin());
         phoneField.setValue(String.valueOf(employee.getPhone()));
         emailField.setValue(employee.getEmail());
         salaryField.setValue(String.valueOf(employee.getSalary()));
@@ -928,7 +994,7 @@ public class SingleEmployeeView extends Div {
     }
 
     private void styleDaysOff(){
-        daysOff.setWidth("90%");
+        daysOff.setWidth("100%");
         daysOff.getStyle().set("background","#f1f1f1").set("box-shadow"," inset 4px 4px 15px 0px #6c6868, 5px 5px 15px 5px rgb(0 0 0 / 0%)").set("margin","100px auto").set("border","1px solid black").set("padding","10px").set("border-radius","20px").set("margin-bottom","0");
         titleDaysOff.getStyle().set("color","white").set("margin","auto").set("display","inline-block");
         titleContainerDaysOff.getStyle().set("border"," 1px solid").set(
@@ -941,7 +1007,7 @@ public class SingleEmployeeView extends Div {
     }
 
     private void styleAbsences(){
-        absences.setWidth("90%");
+        absences.setWidth("100%");
         absences.getStyle().set("background","#f1f1f1").set("box-shadow"," inset 4px 4px 15px 0px #6c6868, 5px 5px 15px 5px rgb(0 0 0 / 0%)").set("display","inline-block").set("margin","100px auto").set("border","1px solid black").set("padding","10px").set("border-radius","20px");
         titleContainerAbsences.getStyle().set("border"," 1px solid").set(
                 "background","var(--theme-color)").set(
@@ -954,7 +1020,7 @@ public class SingleEmployeeView extends Div {
     }
 
     private  void styleDelays(){
-        delays.setWidth("90%");
+        delays.setWidth("100%");
         delays.getStyle().set("background","#f1f1f1").set("box-shadow"," inset 4px 4px 15px 0px #6c6868, 5px 5px 15px 5px rgb(0 0 0 / 0%)").set("display","inline-block").set("margin","100px auto").set("border","1px solid black").set("padding","10px").set("border-radius","20px").set("margin-bottom","0");
         titleContainerDelays.getStyle().set("border"," 1px solid").set(
                 "background","var(--theme-color)").set(
@@ -967,7 +1033,7 @@ public class SingleEmployeeView extends Div {
     }
 
     private  void styleOvertime(){
-        overtime.setWidth("90%");
+        overtime.setWidth("100%");
         overtime.getStyle().set("background","#f1f1f1").set("box-shadow"," inset 4px 4px 15px 0px #6c6868, 5px 5px 15px 5px rgb(0 0 0 / 0%)").set("display","inline-block").set("margin","100px auto").set("border","1px solid black").set("padding","10px").set("border-radius","20px").set("margin-bottom","0");
         titleContainerOvertime.getStyle().set("border"," 1px solid").set(
                 "background","var(--theme-color)").set(
@@ -982,8 +1048,8 @@ public class SingleEmployeeView extends Div {
     }
 
     private void stylePersonalInfoSpans(){
-        personalInformation.setWidth("80%");
-        personalInformation.getStyle().set("font-family","cursive").set("min-height","20.625rem").set("background","#f1f1f1").set("box-shadow"," inset 4px 4px 15px 0px #6c6868, 5px 5px 15px 5px rgb(0 0 0 / 0%)").set("margin","100px auto").set("margin-bottom","20px").set("border","1px solid black").set("padding","10px").set("border-radius","20px");
+        personalInformation.setWidth("65%");
+        personalInformation.getStyle().set("font-family","sans-serif").set("min-height","20.625rem").set("background","#f1f1f1").set("box-shadow"," inset 4px 4px 15px 0px #6c6868, 5px 5px 15px 5px rgb(0 0 0 / 0%)").set("margin","100px auto").set("margin-bottom","20px").set("border","1px solid black").set("padding","10px").set("border-radius","20px");
         titleContainerPersonalInfo.getStyle().set("border"," 1px solid").set(
                 "background","var(--theme-color)").set(
                 "width"," 80%").set(
@@ -992,7 +1058,7 @@ public class SingleEmployeeView extends Div {
                 "border-radius"," 30px").set(
                 "text-align"," center").set("padding","20px");
         titlePersonalInfo.getStyle().set("color","white").set("margin","auto").set("display","inline-block");
-        fullName.getStyle().set("text-align","center");
+        fullName.getStyle().set("text-align","center").set("width","100%");
         picture.setMaxWidth("200px");
         picture.getStyle().set("box-shadow","rgb(108 104 104) 4px 4px 15px 0px").set("border-radius","100px").set("text-align","center").set("display","block" ).set("margin","25px auto");
         codeCnss.getStyle().set("margin-left","20px").set("width","40%").set("display","inline-block").set("margin-bottom","15px");
@@ -1016,7 +1082,7 @@ public class SingleEmployeeView extends Div {
 
     private void styleFields() {
         // Style box
-        personalInformation.setWidth("80%");
+        personalInformation.setWidth("65%");
         personalInformation.getStyle().set("box-shadow"," inset 4px 4px 15px 0px #6c6868, 5px 5px 15px 5px rgb(0 0 0 / 0%)").set("margin","100px auto").set("margin-bottom","10px").set("border","1px solid black").set("padding","10px").set("border-radius","20px");
         titleContainerPersonalInfo.getStyle().set("border","1px solid").set(
                 "background","var(--theme-color)").set(
@@ -1035,7 +1101,7 @@ public class SingleEmployeeView extends Div {
         pictureMemoryUpload.setUploadButton(uploadButton);
         pictureMemoryUpload.setDropLabel(dropLabel);
         pictureMemoryUpload.setDropLabelIcon(dropIcon);
-        pictureMemoryUpload.setWidth("30%");
+        pictureMemoryUpload.setWidth("80%");
         pictureMemoryUpload.getStyle().set("margin","0 auto");
 //        Style rest of the form
         firstNameField.getStyle().set("width","45%").set("max-height","55px").set("margin","0% 2%").set("display","inline-block");

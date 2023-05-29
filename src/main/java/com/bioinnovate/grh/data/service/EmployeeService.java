@@ -23,13 +23,19 @@ public class EmployeeService extends CrudService<Employee, Integer> {
         return repository;
     }
 
-    public List findAll(){
+    public List<Employee> findAll(){
         return  repository.selectStillWorkingEmployees();
     }
 
-    public List findAllForOneDepartment(Department department){
+    public List<Employee> findAllForOneDepartment(Department department){
         return  repository.findAllForOneDepartment(department);
     }
+
+    public List<Employee> findAllEmployeesForOneDepartment(Department department){
+        return  repository.findAllEmployeesForOneDepartment(department);
+    }
+
+    public Integer findEmployeesInDaysOff(){return repository.findEmployeesInDaysOff();}
 
     public Employee findEmployeeByEmail(String email){
         return repository.findEmployeeByEmail(email);

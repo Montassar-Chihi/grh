@@ -253,7 +253,7 @@ public class RequestDayOffManagementView extends Div {
             daysOff.setDateBegin(requestDayOff.getDateBegin());
             daysOff.setDateEnd(Date.valueOf(requestDayOff.getDateBegin().toLocalDate().plusDays(requestDayOff.getDuration())));
             Employee employee = requestDayOff.getEmployee();
-            UpdateSoldeDaysOff.update(delaysService,absenceService,employeeService,employee);
+//            UpdateSoldeDaysOff.update(delaysService,absenceService,employeeService,employee);
             employee.setInDaysOff(true);
             employee.setDaysOffLeft(employee.getDaysOffLeft()-requestDayOff.getDuration());
             daysOff.setEmployee(employee);

@@ -67,6 +67,7 @@ public class UserView extends Div {
         add(splitLayout);
 
         // Configure Grid
+        grid.addClassName("grid");
         grid.addColumn("name").setAutoWidth(true).setHeader("Nom");
         grid.addColumn("email").setAutoWidth(true);
         grid.addColumn("userRoles.name").setAutoWidth(true).setHeader("Occupation");

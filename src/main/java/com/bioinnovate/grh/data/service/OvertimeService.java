@@ -24,9 +24,7 @@ public class OvertimeService extends CrudService<Overtime, Integer> {
         return  repository.findAll();
     }
 
-    public List<Overtime> findOvertimeByEmployee(int id){return repository.findOvertimeByEmployeeId(id);}
-
-    public Integer findTotalOvertimeByEmployee(int id){return repository.findTotalOvertimeByEmployeeId(id);}
+    public Integer findTotalOvertime(){return repository.findTotalOvertime();}
 
     public void deleteOvertime(int delaysId){
         repository.deleteOvertime(delaysId);
