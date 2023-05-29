@@ -347,13 +347,13 @@ public class HomeView extends Div {
         Div Div = createStatsBox("blue",VaadinIcon.USER,"En congé",employeeService.findEmployeesInDaysOff()+"");
         double delays ;
         try {
-            delays = (delaysService.findTotalDelays()/3600)
+            delays = (delaysService.findTotalDelays()/60)
                     /
-                    (employeeService.findAll().size()*countBusinessDaysBetween(LocalDate.of(LocalDate.now().getYear(),LocalDate.now().getMonth(),1 ),LocalDate.now()));
-        }catch (Exception e){
+                    ((1+employeeService.findAll().size())*countBusinessDaysBetween(LocalDate.of(LocalDate.now().getYear(),LocalDate.now().getMonth(),1 ),LocalDate.now()));
+            }catch (Exception e){
             delays = 0.0;
         }
-        Div absencesDiv = createStatsBox("orange",VaadinIcon.CLOSE,"Retard (en moyenne)",delays+"\n H/J par employé");
+        Div absencesDiv = createStatsBox("orange",VaadinIcon.CLOSE,"Retard (en moyenne)",delays+"\n Min/J par employé");
 
         HorizontalLayout horizontalLayout = new HorizontalLayout(Div,absencesDiv,overtimeDiv,reclamationDiv);
         return horizontalLayout;
