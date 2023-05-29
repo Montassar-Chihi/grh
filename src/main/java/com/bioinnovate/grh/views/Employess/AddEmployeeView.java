@@ -167,7 +167,7 @@ public class AddEmployeeView extends Div {
                 employee.setPicture(employee.getId() + fileName);
                 InputStream fileData = pictureMemoryBuffer.getInputStream();
                 array = fileData.readAllBytes();
-                FileOutputStream output = new FileOutputStream("C:\\Users\\ASUS\\Desktop\\resources\\" + employee.getPicture());
+                FileOutputStream output = new FileOutputStream("src\\main\\resources\\META-INF\\resources\\images\\" + employee.getPicture());
                 output.write(array);
                 output.close();
             }catch(IOException error){

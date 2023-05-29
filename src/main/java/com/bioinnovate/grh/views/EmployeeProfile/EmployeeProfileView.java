@@ -178,6 +178,9 @@ public class EmployeeProfileView extends Div {
         daysOff.add(titleContainerDaysOff, daysOffGrid);
         styleDaysOff();
         Button requestTimeOff = new Button("Demander Un congé");
+        if (employee.getDaysOffLeft()==0.0){
+            requestTimeOff.setEnabled(false);
+        }
         requestTimeOff.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         requestTimeOff.setWidth("40%");
         requestTimeOff.getStyle().set("margin","10px auto");

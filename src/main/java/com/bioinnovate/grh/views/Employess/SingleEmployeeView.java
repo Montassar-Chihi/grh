@@ -477,12 +477,16 @@ public class SingleEmployeeView extends Div {
         absenceDetails.setJustified(justified.getValue());
 //        absenceDetails.setEmployee(theEmployee);
         absenceService.update(absenceDetails);
+        List<Absences> absences = theEmployee.getAbsences();
         try{
-            List<Absences> absences = theEmployee.getAbsences();
-            absences.add(absenceDetails);
-            theEmployee.setAbsences(absences);
-            employeeService.update(theEmployee);
-        }catch (Exception ignored){}
+            if (!(absences.contains(absenceDetails))){
+                absences.add(absenceDetails);
+                theEmployee.setAbsences(absences);
+                employeeService.update(theEmployee);
+            }
+        }catch (Exception ignored){
+            ignored.printStackTrace();
+        }
     }
 
     private void styleDelaysFields(){
@@ -615,12 +619,14 @@ public class SingleEmployeeView extends Div {
         delaysDetails.setDuration(durationDelaysHours.getValue()*3600+durationDelaysMin.getValue()*60+durationDelaysSec.getValue());
 //        delaysDetails.setEmployee(theEmployee);
         delaysService.update(delaysDetails);
+        List<Delays> delays = theEmployee.getDelays();
         try{
-            List<Delays> delays = theEmployee.getDelays();
-            delays.add(delaysDetails);
-            theEmployee.setDelays(delays);
-            employeeService.update(theEmployee);
-        }catch (Exception ignored){}
+            if(!(delays.contains(delaysDetails))){
+                delays.add(delaysDetails);
+                theEmployee.setDelays(delays);
+                employeeService.update(theEmployee);
+            }
+        }catch (Exception ignored){ignored.printStackTrace();}
     }
 
     private void styleOvertimeFields(){
@@ -750,12 +756,14 @@ public class SingleEmployeeView extends Div {
         overtimeDetails.setDuration(durationOvertimeHours.getValue()*3600+durationOvertimeMin.getValue()*60+durationOvertimeSec.getValue());
 //        overtimeDetails.setEmployee(theEmployee);
         overtimeService.update(overtimeDetails);
+        List<Overtime> overtimes = theEmployee.getOvertime();
         try {
-            List<Overtime> overtimes = theEmployee.getOvertime();
-            overtimes.add(overtimeDetails);
-            theEmployee.setOvertime(overtimes);
-            employeeService.update(theEmployee);
-        }catch (Exception ignored){}
+            if(!(overtimes.contains(overtimeDetails))){
+                overtimes.add(overtimeDetails);
+                theEmployee.setOvertime(overtimes);
+                employeeService.update(theEmployee);
+            }
+        }catch (Exception ignored){ignored.printStackTrace();}
     }
 
     private void styleDaysOffFields(){
@@ -853,12 +861,14 @@ public class SingleEmployeeView extends Div {
         daysOffDetails.setReason(reason.getValue());
 //        daysOffDetails.setEmployee(theEmployee);
         daysOffService.update(daysOffDetails);
+        List<DaysOff> daysOffs = theEmployee.getDaysOff();
         try{
-            List<DaysOff> daysOffs = theEmployee.getDaysOff();
-            daysOffs.add(daysOffDetails);
-            theEmployee.setDaysOff(daysOffs);
-            employeeService.update(theEmployee);
-        }catch (Exception ignored){}
+            if(!(daysOffs.contains(daysOffDetails))){
+                daysOffs.add(daysOffDetails);
+                theEmployee.setDaysOff(daysOffs);
+                employeeService.update(theEmployee);
+            }
+        }catch (Exception ignored){ignored.printStackTrace();}
     }
 
     private void createEditPersonalInfo(Employee employee, EmployeeService employeeService,DepartmentService departmentService,RequestDayOffService requestDayOffService){
