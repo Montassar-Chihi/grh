@@ -248,18 +248,23 @@ public class RequestDayOffManagementView extends Div {
         requestDayOff.setStatus("Accepté");
 
         DaysOff daysOff = new DaysOff();
-        if (requestDayOff.getDateBegin().toLocalDate().compareTo(LocalDate.now()) == 0){
-            daysOff.setReason(requestDayOff.getReason());
-            daysOff.setDateBegin(requestDayOff.getDateBegin());
-            daysOff.setDateEnd(Date.valueOf(requestDayOff.getDateBegin().toLocalDate().plusDays(requestDayOff.getDuration())));
-            Employee employee = requestDayOff.getEmployee();
+        daysOff.setReason(requestDayOff.getReason());
+        daysOff.setDateBegin(requestDayOff.getDateBegin());
+        daysOff.setDateEnd(Date.valueOf(requestDayOff.getDateBegin().toLocalDate().plusDays(requestDayOff.getDuration())));
+        Employee employee = requestDayOff.getEmployee();
 //            UpdateSoldeDaysOff.update(delaysService,absenceService,employeeService,employee);
-            employee.setInDaysOff(true);
-            employee.setDaysOffLeft(employee.getDaysOffLeft()-requestDayOff.getDuration());
-            daysOff.setEmployee(employee);
-            daysOffService.update(daysOff);
-            employeeService.update(employee);
-        }
+        employee.setInDaysOff(true);
+        employee.setDaysOffLeft(employee.getDaysOffLeft()-requestDayOff.getDuration());
+        employeeService.update(employee);
+
+        daysOff.setEmployee(employee);
+        daysOffService.update(daysOff);
+
+        List<DaysOff> daysOffs = employee.getDaysOff();
+        daysOffs.add(daysOff);
+        employee.setDaysOff(daysOffs);
+        employeeService.update(employee);
+
         requestDayOffService.update(requestDayOff);
         UI.getCurrent().getPage().reload();
     }
